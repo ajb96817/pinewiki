@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="sitemap content_box">
+  <h2>Sitemap</h2>
+  <table class="sitemap">
+    <thead>
+      <tr>
+	<th>Page</th>
+	<th class="filesize">Size</th>
+	<th>Last Modified</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in page_infos %}
+      <tr>
+	<td style="padding-left: {{p['indent_level']+1}}em;">
+	  <a href="{{url_for('view_page', pagename=p['pagename'])}}">{{p['pagename']}}</a>
+	</td>
+	<td class="filesize">{{p['filesize']}} b</td>
+	<td>
+	  {{p['last_modified_timestamp']}} by
+	  <strong>{{p['last_modified_by_username']}}</strong>
+	</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

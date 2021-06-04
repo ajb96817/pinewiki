@@ -1,0 +1,56 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class="admin content_box">
+  <h2>Site Admin</h2>
+
+  <h3>User Management</h3>
+
+  <table class="user_admin">
+    <thead>
+      <tr>
+	<th>User ID</th>
+	<th>Username</th>
+	<th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in all_users %}
+      <tr>
+	<td>{{user.user_id}}</td>
+	<td><strong>{{user.username}}</strong></td>
+	<td>
+	  <a href="{{url_for('delete_user', user_id=user.user_id)}}" onclick="return confirm('Really delete this user?')">Delete User</a>
+	  - <a href="{{url_for('reset_password', user_id=user.user_id)}}" onclick="return confirm('Set password to \'hello\'?')">Reset Password</a>
+	</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h3>Create New User</h3>
+
+  <form method="post" accept-charset="utf-8" action="{{url_for('create_user')}}">
+    <table class="user_profile">
+      <tbody>
+	<tr>
+	  <td class="key">Username:</td>
+	  <td class="value"><input type="text" name="username" size="20" /></td>
+	</tr>
+	<tr>
+	  <td class="key">Password:</td>
+	  <td class="value"><input type="password" name="password" size="20" /></td>
+	</tr>
+	<tr>
+	  <td class="key" />
+	  <td class="value">
+	    <button type="submit" name="action" value="create">Create User</button>
+	  </td>
+	</tr>
+      </tbody>
+    </table>
+  </form>
+</div>
+
+{% endblock %}

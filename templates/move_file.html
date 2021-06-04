@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class="move_file content_box" style="padding: 1em; padding-top: 0;">
+  <h2>Move/Rename File</h2>
+  <form method="post" action="">
+    <table class="move_file">
+      <tbody>
+	<tr>
+	  <td class="label">Current path:</td>
+	  <td class="field"><strong>/{{path_as_prefix}}{{filename}}</strong></td>
+	</tr>
+	<tr>
+	  <td class="label">New filename:</td>
+	  <td class="field"><input type="text" name="filename" size="40" value="{{filename}}" /></td>
+	</tr>
+	<tr>
+	  <td class="label">New folder:</td>
+	  <td class="field"><input type="text" id="directory" name="directory" size="40" value="/{{path}}" /></td>
+	</tr>
+	<tr>
+	  <td class="label" />
+	  <td class="field"><input type="submit" value="Move/Rename" /></td>
+	</tr>
+      </tbody>
+    </table>
+  </form>
+
+  <div class="folder_list">
+    <h2>Available folders:</h2>
+    <ul>
+      {% for directory in all_directories %}
+      <li><a href="#" onclick="document.getElementById('directory').value = '{{directory}}'">{{directory}}</a></li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+{% endblock %}
+

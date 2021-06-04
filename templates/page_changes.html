@@ -1,0 +1,42 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class="content_box">
+  <h2>Changes to {{pagename}}</h2>
+  {% if events|length == 0 %}
+  <p>No changes are on record for this page.</p>
+  {% else %}
+  <table class="events">
+    <tbody>
+      {% for event in events %}
+      <tr>
+	<td class="timestamp">{{event.formatted_timestamp()}}</td>
+	<td class="{{event.bytes_changed_css_class()}}">{{event.formatted_bytes_changed()|safe}}</td>
+	<td>{{event.formatted_description()|safe}}</td>
+	<td class="commands">
+	  {% if event.is_diffable() %}
+	  <a href="#" onclick="alert('not yet implemented')">View Change</a> -
+	  <a href="#" onclick="alert('not yet implemented')">Compare</a>
+	  {% endif %}
+	</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  <div class="pagination">
+    {% if more_available %}
+    <a href="{{url_for('view_page_changes', pagename=pagename, page=page_number+1)}}">View older changes</a>
+    {% endif %}
+    {% if more_available and page_number > 1 %}
+    -
+    {% endif %}
+    {% if page_number > 1 %}
+    <a href="{{url_for('view_page_changes', pagename=pagename, page=page_number-1)}}">View newer changes</a>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

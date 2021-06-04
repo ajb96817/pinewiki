@@ -1,0 +1,102 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class="user_profile content_box">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  {% for category, message in messages %}
+  {% if category == 'profile_notice' %}
+  <div class="notice">{{message}}</div>
+  {% endif %}
+  {% endfor %}
+  {% endif %}
+  <h2>User Profile</h2>
+  <form method="post" accept-charset="utf-8" action="{{url_for('update_profile')}}">
+    <table class="edit_profile">
+      <tbody>
+	<tr>
+	  <td class="key">Your username:</td>
+	  <td class="value">
+	    <input type="text" size="20" name="username" value="{{current_user.username}}" />
+	  </td>
+	</tr>
+	<tr>
+	  <td class="key">Chat color:</td>
+	  <td class="value">
+	    <select name="chat_color">
+	      {% for colorname in chatroom_helper.COLORNAMES %}
+	      {% set colorvalue = chatroom_helper.COLORS[loop.index0] %}
+	      <option value="{{colorvalue}}"{{' selected' if current_user.profile['chat_color'] == colorvalue else ''}}>{{colorname|capitalize}}</option>
+	      {% endfor %}
+	  </td>
+	</tr>
+	<tr>
+	  <td class="key">Notifications:</td>
+	  <td class="value">
+	    <select name="notification_preference">
+	      {% for (value, description) in current_user.NOTIFICATION_OPTIONS %}
+	      <option value="{{value}}"{{' selected' if current_user.profile['notifications'] == value else ''}}>{{description}}</option>
+	      {% endfor %}
+	    </select>
+	    <p>
+	      <a href="#" onclick="Notification.requestPermission()">Authorize notifications</a> -
+	      <a href="#" onclick="new Notification('This is a test')">Test notifications</a>
+	    </p>
+	  </td>
+	</tr>
+	<tr>
+	  <td class="key"></td>
+	  <td class="value">
+	    <button type="submit" name="action" value="save">Save Changes</button>
+	  </td>
+	</tr>
+      </tbody>
+    </table>
+  </form>
+
+  <h2>Password Update</h2>
+
+  {% if messages %}
+  {% for category, message in messages %}
+  {% if category == 'password_notice' %}
+  <div class="notice">{{message}}</div>
+  {% elif category == 'password_error' %}
+  <div class="error">{{message}}</div>
+  {% endif %}
+  {% endfor %}
+  {% endif %}
+  <form method="post" accept-charset="utf-8" action="{{url_for('update_password')}}">
+    <table class="edit_profile">
+      <tbody>
+	<tr>
+	  <td class="key">Current password:</td>
+	  <td class="value">
+	    <input type="password" size="20" name="current_password" value="" />
+	  </td>
+	</tr>
+	<tr>
+	  <td class="key">New password:</td>
+	  <td class="value">
+	    <input type="password" size="20" name="new_password" value="" />
+	  </td>
+	</tr>
+	<tr>
+	  <td class="key">Verify new password:</td>
+	  <td class="value">
+	    <input type="password" size="20" name="password_verify" value="" />
+	  </td>
+	</tr>
+	<tr>
+	  <td class="key"></td>
+	  <td class="value">
+	    <button type="submit" name="action" value="save">Update Password</button>
+	  </td>
+	</tr>
+      </tbody>
+    </table>
+  </form>
+  {% endwith %}
+</div>
+
+{% endblock %}

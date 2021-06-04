@@ -1,0 +1,77 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class="page_wrapper">
+  <div class="pagename">
+    <span class="pagename">{{pagename}}</span>
+  </div>
+  <div class="page_content content_box">
+
+    {% if rendered_preview %}
+    <div class="preview">
+      <h2>Preview</h2>
+      <div class="chat_post">
+	<div class="chat_byline" style="background-color: {{current_user.profile['chat_color']}};">
+	  <strong>{{current_user.username}}</strong>
+	</div>
+	<div class="chat_content">{{rendered_preview|safe}}</div>
+      </div>
+    </div>
+    {% endif %}
+    
+    <div class="chat_new_post_area">
+      {% if rendered_preview %}
+      <div>Your message will appear as shown above.  Press Post to commit your changes.</div>
+      {% else %}
+      <button value="post" onclick="document.getElementById('post_message_form').style.display='block'; document.getElementById('post_message_button').style.display='none';" id="post_message_button">Post a message</button>
+      {% endif %}
+      <form id="post_message_form" style="display: {{'block' if rendered_preview else 'none'}};" method="post" accept-charset="utf-8" class="post_chat">
+	{% if not rendered_preview %}
+	<div>Post a message:</div>
+	{% endif %}
+	<textarea name="page_content" rows="8" cols="80" autofocus>{{chat_content}}</textarea>
+	<button type="submit" name="action" value="save" accesskey="s">Post</button>
+	<button type="submit" name="action" value="preview" accesskey="v">Preview</button>
+      </form>
+    </div>
+
+    <div id="chat_post_container">
+    {% for page in chat_pages %}
+    {% if loop.index0 > 0 and chat_pages[loop.index0-1].last_modified_date() != page.last_modified_date() %}
+    <div class="chat_date_separator">{{page.formatted_last_modified_date()}}</div>
+    {% endif %}
+    <div class="chat_post">
+      {% if page.user %}
+      {% set chat_color = page.user.profile['chat_color'] %}
+      {% else %}
+      {% set chat_color = '#ddd' %}
+      {% endif %}
+      <div class="chat_byline" style="background-color: {{chat_color}};">
+	{% if page.last_modified_by_user_id == current_user.user_id %}
+	<div class="chat_actions">
+	  <a href="{{url_for('edit_page', pagename=page.name)}}">Edit</a> -
+	  <a href="{{url_for('delete_chat_item', pagename=page.name)}}" onclick="return confirm('Really delete this chat message?')">Delete</a>
+	</div>
+	{% endif %}
+	<strong>{{page.username}}</strong> at
+	{{helper.formatted_time_from_chat_pagename(page.name)}}:
+      </div>
+      <div class="chat_content">
+	{{page.content_as_markdown()|safe}}
+      </div>
+    </div>
+    {% endfor %}
+    </div>
+
+    {% if is_main_chat_view %}
+    <div class="pagination">
+      <a href="{{url_for('view_chat', older=1)}}">View older messages</a>
+    </div>
+    {% endif %}
+  </div>
+  <div class="page_footer">
+  </div>
+</div>
+
+{% endblock %}

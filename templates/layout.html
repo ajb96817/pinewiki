@@ -1,0 +1,66 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>{{pagename + ' ' if pagename else ''}}[pinewiki]</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>">
+    <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='wiki.css')}}" />
+    <script type="text/javascript" charset="utf-8" src="{{url_for('static', filename='encryption.js')}}"></script>
+    {% if not (current_user.is_anonymous or current_user.profile['notifications'] == 'off') %}
+    <script type="text/javascript" charset="utf-8" src="{{url_for('static', filename='notifications.js')}}"></script>
+    {% endif %}
+    {% if is_main_chat_view %}
+    <script type="text/javascript" charset="utf-8" src="{{url_for('static', filename='chat.js')}}"></script>
+    {% endif %}
+  </head>
+
+  <body>
+    {% block header %}
+    <div id="header">
+      <div id="tools">
+	<div class="toolbar">
+	  {% if current_user.is_anonymous %}
+	  <strong>Not currently logged in</strong> -
+	  <a href="{{url_for('login')}}">Log in</a>
+	  {% else %}
+	  Logged in as:
+	  <strong>{{current_user.username}}</strong> -
+	  <a href="{{url_for('view_profile')}}"{{(' class="current"' if toolbar_selection == 'profile' else '')|safe}}>Profile</a> -
+	  <a href="{{url_for('logout')}}">Log out</a>
+	  {% endif %}
+	</div>
+	<div class="toolbar">
+	  <form action="{{url_for('fulltext_search')}}" method="get" accept-charset="utf-8">
+	    <input type="text" placeholder="Search" name="query" />
+	    <button type="submit" title="Search">Search</button>
+	  </form>
+	</div>
+	<div class="toolbar">
+	  <a accesskey="p" href="{{url_for('view_page', pagename='start')}}"{{(' class="current"' if toolbar_selection == 'start' else '')|safe}}>Start</a> -
+	  <a accesskey="t" href="{{url_for('view_page', pagename='chat')}}"{{(' class="current"' if toolbar_selection == 'chat' else '')|safe}}>Chat</a> -
+	  <a accesskey="c" href="{{url_for('todays_calendar')}}"{{(' class="current"' if toolbar_selection == 'calendar' else '')|safe}}>Calendar</a> -
+	  <a accesskey="f" href="{{url_for('view_directory', path='')}}"{{(' class="current"' if toolbar_selection == 'files' else '')|safe}}>Files</a> -
+	  <a accesskey="r" href="{{url_for('recent_changes')}}"{{(' class="current"' if toolbar_selection == 'recent_changes' else '')|safe}}>Recent&nbsp;Changes</a> -
+	  <a accesskey="m" href="{{url_for('view_sitemap')}}"{{(' class="current"' if toolbar_selection == 'sitemap' else '')|safe}}>Sitemap</a>
+	</div>
+      </div>
+
+      {% if breadcrumbs is defined %}
+      <div class="breadcrumbs">
+	Location:
+	{% for breadcrumb in breadcrumbs %}
+	{% if breadcrumb[2] %}
+	<strong><a href="{{url_for('view_page', pagename=breadcrumb[0])}}">{{breadcrumb[1]}}</a></strong>
+	{% else %}
+	<a href="{{url_for('view_page', pagename=breadcrumb[0])}}">{{breadcrumb[1]}}</a>
+	&raquo;
+	{% endif %}
+	{% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    {% endblock %}
+    
+    <div id="content">{% block content %}{% endblock %}</div>
+  </body>
+</html>

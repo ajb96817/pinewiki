@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class="page_wrapper">
+  <div class="pagename">
+    <span class="pagename">{{pagename}}</span>
+  </div>
+  <div class="page_content content_box">
+    <div class="commands">
+      <a href="{{url_for('edit_page', pagename=pagename)}}" accesskey="e">Edit Page</a> -
+      <a href="{{url_for('view_page_changes', pagename=pagename)}}" accesskey="c">View Changes</a>
+    </div>
+    {% if page.is_empty() %}
+    <strong>
+      This page does not exist yet.  To create it,
+      <a href="{{url_for('edit_page', pagename=pagename)}}">edit the page</a>.
+    </strong>
+    {% else %}
+    {{rendered_markdown|safe}}
+    {% endif %}
+  </div>
+  <div class="page_footer">
+    <div class="last_modified">
+      {% if page.last_modified_by_user_id and page.last_modified_timestamp %}
+      Last modified: {{page.formatted_last_modified_timestamp()}}
+      by <strong>{{page.last_modified_by_username()}}</strong>
+      {% endif %}
+    </div>
+    <div class="commands">
+      <a href="{{url_for('edit_page', pagename=pagename)}}">Edit Page</a> -
+      <a href="{{url_for('view_page_changes', pagename=pagename)}}">View Changes</a>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

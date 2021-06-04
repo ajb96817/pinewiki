@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+
+{% block header %}
+{% endblock %}
+
+{% block content %}
+<h1 class="login">Authentication required</h1>
+{% if error %}
+<div class="error">{{error}}</div>
+{% endif %}
+<form class="login" action="login" method="post" accept-charset="utf-8">
+  <table>
+    <tbody>
+      <tr>
+	<td class="label"><label for="username">Username:</label></td>
+	<td class="field"><input type="text" name="username" autofocus /></td>
+      </tr>
+      <tr>
+	<td class="label"><label for="password">Password:</label></td>
+	<td class="field"><input type="password" name="password" /></td>
+      </tr>
+      <tr>
+	<td class="label" />
+	<td class="field">
+	  <button type="submit" accesskey="f">Log in</button>
+	</td>
+      </tr>
+    </tbody>
+  </table>
+</form>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class="content_box">
+  <h2>Search results for '{{query}}'</h2>
+
+  {% if search_results|length == 0 %}
+  <div class="search_result" style="padding-bottom: 2em;">
+    No results found for this query.
+  </div>
+  {% else %}
+
+  {% for result in search_results %}
+  <div class="search_result">
+    <div class="search_result_pagename">
+      <a href="{{url_for('view_page', pagename=result['pagename'])}}">{{result['pagename']}}</a>
+    </div>
+    <div class="search_result_snippet">{{result['snippet']}}</div>
+  </div>
+  {% endfor %}
+
+  {% endif %}
+
+  <div class="pagination">
+    {% if more_available %}
+    <a href="{{url_for('fulltext_search', page=page_number+1, query=query)}}">View more search results</a>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

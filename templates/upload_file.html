@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class="file_upload content_box" style="padding: 1em; padding-top: 0;">
+  <h2>Upload to folder: /{{current_path_as_prefix}}</h2>
+  <form method="post" action="" enctype="multipart/form-data">
+    <input type="hidden" value="{{current_path}}" />
+    <p>
+      Select one or more files to upload:
+      <div><input type="file" name="file" multiple /></div>
+    </p>
+    <div><input type="submit" value="Upload" /></div>
+  </form>
+</div>
+
+{% endblock %}
+

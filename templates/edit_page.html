@@ -1,0 +1,52 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class="page_wrapper">
+  <div class="pagename">
+    <span class="pagename">{{pagename}}</span>
+  </div>
+  <div class="page_content content_box">
+    <form method="post" accept-charset="utf-8" class="edit_page" id="edit_page_form" onsubmit="return encryption_editFormOnSubmit()">
+      <button type="submit" name="action" value="save" accesskey="s" id="save_page_button">Save</button>
+      <button type="submit" name="action" value="preview" accesskey="p">Preview</button>
+      {% if page.has_encryption() %}
+      <input type="button" name="decryptButton" value="Decrypt" accesskey="d" value="DecryptSecret" onclick="return decryptEditForm();"></input>
+      {% endif %}
+      <button type="submit" name="action" value="cancel">Cancel</button>
+      <br />
+      {% if rendered_preview %}
+      <p>
+	<em><strong>Preview:</strong> Your content will appear as shown below this text editor.
+	  Press Save to commit your changes.</em>
+      </p>
+      {% endif %}
+      <input type="hidden" name="encrypted_page_content" id="encrypted_page_content" />
+      <textarea name="page_content" id="edit_page_content" rows="10" cols="80" autofocus>{{page.content | e}}</textarea>
+      <br />
+      <button type="submit" name="action" value="save">Save</button>
+      <button type="submit" name="action" value="preview">Preview</button>
+      {% if page.has_encryption() %}
+      <input type="button" name="decryptButton" value="Decrypt" value="DecryptSecret" onclick="return decryptEditForm();"></input>
+      {% endif %}
+      <button type="submit" name="action" value="cancel">Cancel</button>
+    </form>
+  </div>
+
+  {% if rendered_preview %}
+  <div class="preview">
+    <h2>Preview</h2>
+    <div class="page_content">{{rendered_preview|safe}}</div>
+  </div>
+  {% endif %}
+  <div class="page_footer">
+    <div class="last_modified">
+      {% if page.last_modified_by_user_id and page.last_modified_timestamp %}
+      Last modified: {{page.formatted_last_modified_timestamp()}}
+      by <strong>{{page.last_modified_by_username()}}</strong>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}

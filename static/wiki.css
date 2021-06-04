@@ -1,0 +1,296 @@
+
+
+body {
+    margin: 0;
+    padding: 0.5em 3em;
+    background-color: #eee;
+    font-family: monospace;
+    font-size: 15px;
+    overflow-y: scroll;  /* always show scrollbar to keep UI form jumping around slightly from page to page */
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: bold;
+    line-height: 1.2;
+    clear: both;
+    background-color: #eee;
+    padding: 0.1em 0.75em;
+    border-bottom: 1px solid #ccc;
+    border-top: 1px solid #ccc;
+}
+h1 { font-size: 2em; margin: 0 0 0.444em; }
+h1.login { border: none; padding: 0; }
+h2 { font-size: 1.5em; margin: 0 0 0.666em; }
+h3 { font-size: 1.125em; margin: 0 0 0.888em; }
+h4 { font-size: 1em; margin: 0 0 1.0em; }
+h5 { font-size: .875em; margin: 0 0 1.1428em; }
+h6 { font-size: .75em; margin: 0 0 1.333em; }
+a { color: #2b73b7; text-decoration: none; }
+a.wikilink { color: #080; }
+a.wikilink_missing { color: red; text-decoration: underline red dashed; }
+table { border-collapse: collapse; }
+
+div.notice { color: #090; font-weight: bold; }
+div.error { color: #900; font-weight: bold; }
+
+form.login fieldset { width: auto; float: left; }
+#tools { float: right; text-align: right; }
+#tools div.toolbar { margin: 0.3em 0; }
+#tools div.toolbar a.current { font-weight: bold; }
+div.breadcrumbs { padding-top: 1em; font-size: 110%; }
+
+div.page_wrapper { clear: both; }
+div.pagename { padding-left: 2em; font-size: 110%; }
+div.pagename span.pagename {
+    font-weight: bold;
+    color: #444;
+    border: 1px solid #666;
+    border-bottom: 2px solid #fff;
+    background-color: #fff;
+    margin-bottom: -2px;
+    margin-right: 1em;
+    padding: 0.25em 1em;
+    padding-bottom: 0;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+div.page_content {
+    padding: 1em 2em;
+}
+div.page_content div.commands {
+    float: right;
+    padding-bottom: 0.3em;
+}
+div.page_content ul { list-style: square outside; }
+div.page_content hr {
+    border: 1px solid #999;
+    border-bottom: none;
+    height: 0;
+}
+div.page_content table {
+    border: 1px solid #999;
+    box-shadow: 0 0 0.2em #bbb;
+    margin-bottom: 1em;
+}
+div.page_content table td { background-color: white; border: 1px solid #999; padding: 0.15em 0.5em; }
+div.page_content table th { background-color: #ddd; text-align: left; padding: 0.15em 0.5em; }
+div.page_footer { margin-top: 0.25em; }
+div.page_footer div.last_modified { float: right; text-align: right; }
+div.page_footer div.commands { font-size: 110%; padding-left: 1em; }
+
+div.page_content div.encrypted_chunk {
+    clear: both;
+    box-shadow: 0 0 0.5em 0 #cca inset;
+    background-color: #ffe;
+    padding: 0.75em 1.5em;
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+div.page_content div.ciphertext { display: none; }
+div.page_content div.decrypted div.ciphertext { display: block; }
+div.page_content div.encryption_commands { font-weight: bold; }
+div.page_content div.decrypted div.encryption_commands { display: none; }
+
+div.page_content blockquote {
+    clear: both;
+    margin: 0;
+    padding: 0.01em 1em;
+    border-left: 4px solid #fcc;
+    background-color: #fee;
+}
+
+div.page_wrapper div.preview h2 {
+    border: none;
+    border-bottom: 4px dotted #ccc;
+    margin-top: 1em;
+}
+
+div.pagination {
+    padding: 0.5em 2em;
+}
+
+form.edit_page textarea, form.post_chat textarea {
+    width: 98%;
+    height: 500px;
+    border: 1px solid #aaa;
+    background-color: #f8f8f8;
+    padding: 0.2em 0.5em;
+    margin-bottom: 0.5em;
+    margin-top: 0.5em;
+    font-size: 110%;
+    box-shadow: 0 0 0.3em #aaa inset;
+}
+form.post_chat textarea { height: 150px; }
+
+div.chat_new_post_area {
+    margin-bottom: 1em;
+}
+div.chat_date_separator {
+    font-weight: bold;
+    font-size: 120%;
+    padding-left: 2em;
+    padding-top: 1em;
+}
+div.chat_post {
+    padding: 0;
+    box-shadow: 0 0 0.5em #ddd;
+    border: 1px solid #aaa;
+    margin: 1em 0;
+    margin-top: 0.1em;
+}
+div.chat_post div.chat_byline {
+    padding: 0.25em 1em;
+    border-bottom: 1px solid #ccc;
+    border-right: 1px solid #ccc;
+}
+div.chat_post div.chat_actions { float: right; }
+div.chat_post div.chat_content { padding: 0 1em; }
+
+
+/* General "main page content" box with border and box-shadow.
+   Used for several different page types. */
+div.content_box {
+    clear: both;
+    border: 1px solid #666;
+    background-color: #fff;
+    box-shadow: 0 0 1em 2px #ccc;
+}
+
+table.events { margin: 1em; }
+table.events td { padding: 0.1em 1em; }
+table.events td.timestamp { white-space: nowrap; }
+table.events tr:hover { background-color: #f3f3f3; }
+table.events td.byteschanged { text-align: right; white-space: nowrap; }
+table.events td.byteschanged_zero { background-color: #ccc; }
+table.events td.byteschanged_negative { background-color: #fcc; }
+table.events tr:hover td.byteschanged_negative { background-color: #ebb; }
+table.events td.byteschanged_positive { background-color: #cfc; }
+table.events tr:hover td.byteschanged_positive { background-color: #beb; }
+/*table.events td.commands { border-left: 1px solid #ccc; }*/
+
+
+div.file_manager {
+    background-color: #f8f8ff;
+    padding: 1em 2em;
+    margin-top: 4em;
+    overflow: auto;
+}
+div.file_manager div.directories { width: 25%; float: left; }
+div.file_manager div.directories ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    margin-left: 2em;
+    margin-bottom: 1em;
+}
+div.file_manager form.create_folder_form {
+    display: none;
+    margin-top: 1em;
+}
+div.file_manager div.current_path { font-size: 120%; }
+div.file_manager div.commands { border-top: 1px solid #ccc; padding-top: 1em; }
+div.file_manager div.empty_directory {
+    padding-top: 1em;
+    float: left;
+    width: 73%;
+}
+div.file_manager table.file_table {
+    float: left;
+    width: 72%;
+    margin-left: 0.5em;
+    margin-top: 0.5em;
+}
+div.file_manager table.file_table th {
+    font-size: 110%;
+    text-align: left;
+    padding: 0.1em 0.5em;
+    border-bottom: 1px solid #ccc;
+}
+div.file_manager table.file_table td {
+    padding: 0.1em 0.25em;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+div.file_manager table.file_table .filesize, div.file_manager table.file_table .commands { text-align: right; }
+
+div.file_upload { clear: both; }
+div.file_upload h2 { border: none; margin-top: 1em; }
+
+div.move_file table td { padding: 0.2em 0.5em; }
+div.move_file table td.label { text-align: right; }
+div.move_file h2 { border: none; margin-top: 1em; }
+div.folder_list ul { list-style-type: none; }
+
+h2.monthname {
+    clear: both;
+    border: none;
+    font-weight: normal;
+    text-align: center;
+    padding-top: 1em;
+}
+table.calendar {
+    border: none;
+    width: 100%;
+}
+table.calendar th, table.calendar td { width: 14%; /* ~1/7 */ }
+table.calendar th { font-size: 120%; color: #666; }
+table.calendar td.day {
+    height: 8em;
+    vertical-align: top;
+    padding: 0.15em 0.25em;
+}
+table.calendar td.insidemonth { border: 1px solid #aaa; background-color: white; }
+table.calendar td.outsidemonth { border: none; }
+table.calendar td.current_day { background-color: #ffd; }
+table.calendar td.day div.datenumber {
+    font-weight: bold;
+    float: right;
+    text-align: right;
+    padding: 0.1em 0.3em;
+    overflow: auto;
+    background-color: white;
+}
+/* Tighten up paragraph spacing a little inside calendar cells */
+table.calendar td.day p { margin: 0.35em 0; }
+table.calendar td.day div.day_content { font-size: 90%; }
+
+/* These two are to allow each calendar cell to scroll vertically if there's too much content */
+table.calendar div.day_wrapper_1 {
+    position: relative;
+    height: 100%;
+}
+table.calendar div.day_wrapper_2 {
+    overflow-y: auto;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+
+div.sitemap { padding: 1em 2em; }
+table.sitemap th {
+    border-bottom: 1px solid #ccc;
+    text-align: left;
+    padding: 0 1em;
+}
+table.sitemap td { padding: 0 1em; }
+table.sitemap .filesize { text-align: right; }
+
+
+div.search_result { padding: 0.5em 1em; }
+div.search_result_pagename { font-weight: bold; }
+div.search_result_snippet { padding: 0.1em 1em; }
+
+
+div.user_profile { padding: 1em; }
+table.edit_profile { margin-bottom: 1em; }
+table.edit_profile td { padding: 0.2em 0.5em; vertical-align: top; }
+table.edit_profile td.key { text-align: right; font-weight: bold; }
+
+table.user_admin { margin: 0 2em; margin-bottom: 1em; }
+table.user_admin td, table.user_admin th { padding: 0.2em 1em; }
+table.user_admin th { border-bottom: 1px solid #ccc; }
+div.admin table.user_profile { margin: 1em; }
+

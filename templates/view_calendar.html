@@ -1,0 +1,43 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<h2 class="monthname">
+  <a href="{{url_for('view_calendar', year=prev_year, month=prev_month)}}">{{calendar.formatted_monthname(prev_month, prev_year)}}</a> &laquo;
+  <strong>{{calendar.formatted_monthname(calendar.month, calendar.year)}}</strong> &raquo;
+  <a href="{{url_for('view_calendar', year=next_year, month=next_month)}}">{{calendar.formatted_monthname(next_month, next_year)}}</a>
+</h2>
+
+<table class="calendar">
+  <tr>
+    {% for i in calendar.iterweekdays() %}
+    <th>{{calendar.day_abbr(i)}}</th>
+    {% endfor %}
+  </tr>
+
+  {% for week in calendar.monthdays2calendar(calendar.year, calendar.month) %}
+  <tr>
+    {% for (day, weekday) in week %}
+    {% if day == 0 %}
+    <td class="day outsidemonth"></td>
+    {% else %}
+    <td class="day insidemonth{{' current_day' if today.day == day and today.month == calendar.month else ''}}">
+      <div class="day_wrapper_1"><div class="day_wrapper_2">
+      <div class="datenumber">
+	<a href="{{url_for('edit_page', pagename=calendar.pagename_for_day(day))}}">{{day}}</a>
+      </div>
+      {% set page = calendar.page_for_day(day) %}
+      {% if page %}
+      <div class="day_content">
+	{{page.content_as_markdown_with_pagenames_set(calendar.pagenames_set, newlines_to_breaks=True)|safe}}
+      </div>
+      {% endif %}
+      </div></div>
+    </td>
+    {% endif %}
+    {% endfor %}
+  </tr>
+  {% endfor %}
+</table>
+
+{% endblock %}

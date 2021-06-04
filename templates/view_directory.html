@@ -1,0 +1,86 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class="file_manager content_box">
+  <h2>File Manager</h2>
+  <div class="directories">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    {% if category == 'error' %}
+    <div class="error">{{message}}</div>
+    {% endif %}
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+    <div class="current_path">Path: <strong>/{{current_path_as_prefix}}</strong></div>
+    <ul class="directory_list">
+      {% if current_path != '' %}
+      <li>[<a href="{{url_for('view_directory', path=parent_path)}}">parent folder</a>]</li>
+      {% endif %}
+      {% for subdirectory in subdirectories %}
+      <li><a href="{{url_for('view_directory', path=current_path_as_prefix+subdirectory)}}">{{subdirectory}}</a>/</li>
+      {% endfor %}
+    </ul>
+    <div class="commands">
+      <a href="#" onclick="document.getElementById('create_folder_form').style.display='block'">Create folder</a>
+      - <a href="{{url_for('upload_file', path=current_path)}}">Upload&nbsp;file</a>
+      {% if path_is_deletable %}
+      - <a href="{{url_for('delete_directory', path=current_path)}}"
+	   onclick="return confirm('Really delete this folder?')">Delete&nbsp;this&nbsp;folder</a>
+      {% endif %}
+      <form class="create_folder_form" id="create_folder_form"
+            method="post" accept-charset="utf-8"
+	    action="{{url_for('create_directory', path=current_path)}}">
+	<div>
+	  <label for="directory_name">New folder name:</label>
+	</div>
+	<div>
+	  <input type="text" size="12" name="directory_name" />
+	  <button type="submit" name="action" value="Create">Create</button>
+	</div>
+      </form>
+    </div>
+  </div>
+
+  {% if file_details|length == 0 %}
+  <div class="empty_directory">This folder is empty.</div>
+  {% else %}
+  <table class="file_table">
+    <thead>
+      <tr>
+	<th></td>
+	<th>Filename</th>
+	<th>Last Modified</th>
+	<th class="filesize">Size</th>
+	<th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for file in file_details %}
+      <tr>
+	<td>
+	  {% set icon_url = helper.file_extension_icon_url(file['name']) %}
+	  {% if icon_url %}
+	  <img src="{{icon_url}}" width="16" height="16" />
+	  {% endif %}
+	</td>
+	<td><a href="{{url_for('download_file', path=current_path, filename=file['name'])}}">{{file['name']}}</a></td>
+	<td>{{file['modtime']}}</td>
+	<td class="filesize">{{file['size_kb']}}</td>
+	<td class="commands">
+	  <a href="{{url_for('download_file', path=current_path, filename=file['name'], attachment='true')}}">Download</a> -
+	  <a href="{{url_for('move_file', path=current_path, filename=file['name'])}}">Move/Rename</a> -
+	  <a href="{{url_for('delete_file', path=current_path, filename=file['name'])}}"
+	     onclick="return confirm('Really delete this file?')">Delete</a>
+	</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+
+{% endblock %}
+
