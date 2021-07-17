@@ -72,6 +72,8 @@ div.page_content table {
     box-shadow: 0 0 0.2em #bbb;
     margin-bottom: 1em;
 }
+/*div.page_content a.implicit_uri::before { content: "→ "; }*/
+
 div.page_content table td { background-color: white; border: 1px solid #999; padding: 0.15em 0.5em; }
 div.page_content table th { background-color: #ddd; text-align: left; padding: 0.15em 0.5em; }
 div.page_footer { margin-top: 0.25em; }

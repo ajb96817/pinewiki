@@ -42,7 +42,7 @@ function pinewiki_process_notifications(notifications) {
     if(notifications.length == 0)
 	return;
     var main_notification = notifications[0];
-    document.cookie = 'notification_cutoff=' + main_notification.timestamp + ';SameSite=Strict';
+    document.cookie = 'notification_cutoff=' + main_notification.timestamp + '; path=/';
     new Notification('Pinewiki', { 'body': main_notification.message });
 }
 

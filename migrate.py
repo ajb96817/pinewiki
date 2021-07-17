@@ -11,7 +11,7 @@ importer_user_id = 1
 
 def migrate_from_dokuwiki(page_path, calendar_db_path):
     db = Database()
-    db.connect()
+    db.connect('db/pine.sqlite3')
     import_dokuwiki_pages(db, page_path)
     import_dokuwiki_calendar(db, calendar_db_path)
 
@@ -40,8 +40,6 @@ def import_page(db, fs_path, pagename):
     file.close()
     page = Page(pagename, content)
     page.last_modified_by_user_id = 1
-    print(page)
-    print(page.content)
     db.update_page(page)
     db.db.commit()
     
@@ -69,17 +67,18 @@ def parse_calendarobject(content):
     return (event_text, timestamp)
 
 def import_calendar_item(db, event_text, timestamp):
+    event_text = event_text.replace('\\', '')
     helper = CalendarHelper(timestamp.month, timestamp.year)
     pagename = helper.pagename_for_day(timestamp.day)
     page = Page(pagename, event_text)
     page.last_modified_by_user_id = importer_user_id
-    print('import calendar item: {}'.format(page))
+    print('import calendar item: {}'.format(event_text))
     db.update_page(page)
     db.db.commit()
 
 def go():
     migrate_from_dokuwiki(
-        '/home/ajb/src/dokuwiki_import/',
+        '/home/ajb/dokuwiki_import/',
         '/home/ajb/davcal.sqlite3')
     
     

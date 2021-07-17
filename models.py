@@ -29,8 +29,20 @@ class WikiLinkExtension(markdown.extensions.Extension):
         md.inlinePatterns.register(processor, 'wikilink', 75)
         processor2 = WikiFileInlineProcessor(r'\{\{([^}]+)\}\}')
         md.inlinePatterns.register(processor2, 'wikilfile', 76)
+        processor3 = ImplicitURIInlineProcessor(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
+        md.inlinePatterns.register(processor3, 'implicituri', 77)
         md.parser.blockprocessors.register(DokuwikiHeaderBlockProcessor(md.parser), 'dokuwikiheader', 175)
         md.parser.blockprocessors.register(EncryptionBlockProcessor(md.parser), 'encryption', 160)
+
+class ImplicitURIInlineProcessor(markdown.inlinepatterns.InlineProcessor):
+    def handleMatch(self, m, data):
+        uri = m.group()
+        a = xml.etree.ElementTree.Element('a')
+        a.text = uri
+        a.set('href', uri)
+        a.set('class', 'implicit_uri')
+        return a, m.start(0), m.end(0)
+        
 
 class WikiLinkInlineProcessor(markdown.inlinepatterns.InlineProcessor):
     def handleMatch(self, m, data):
@@ -42,6 +54,8 @@ class WikiLinkInlineProcessor(markdown.inlinepatterns.InlineProcessor):
                 pagename, linktext = [p.strip() for p in pieces]
             else:
                 linktext = pagename
+            # TODO: if pagename is a full URI handle that appropriately
+            pagename = self.convert_pagename(pagename)
             url = '/' + pagename
             a = xml.etree.ElementTree.Element('a')
             a.text = linktext
@@ -53,6 +67,11 @@ class WikiLinkInlineProcessor(markdown.inlinepatterns.InlineProcessor):
         else:
             a = ''
         return a, m.start(0), m.end(0)
+
+    # "My Pagename" -> "my_pagename" etc.
+    def convert_pagename(self, pagename):
+        return pagename.strip().lower().replace(' ', '_')
+    
 
 class WikiFileInlineProcessor(markdown.inlinepatterns.InlineProcessor):
     def handleMatch(self, m, data):
@@ -606,8 +625,8 @@ class ChatroomHelper:
 
 
 class Database:
-    def connect(self):
-        db_path = '/'.join([flask.current_app.root_path, 'db', 'pine.sqlite3'])
+    def connect(self, db_path = None):
+        db_path = db_path or '/'.join([flask.current_app.root_path, 'db', 'pine.sqlite3'])
         self.db = sqlite3.connect(db_path)
         self.init_or_upgrade()
 
