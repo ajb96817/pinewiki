@@ -363,10 +363,17 @@ class Page:
     def content_as_markdown_with_pagenames_set(self, pagenames_set, newlines_to_breaks=False):
         wikilink_extension = WikiLinkExtension()
         wikilink_extension.all_pagenames_set = pagenames_set
-        extensions = [wikilink_extension, 'tables']
+        extensions = ['fenced_code', 'codehilite', wikilink_extension, 'tables']
         if newlines_to_breaks:
             extensions.append('nl2br')
-        return markdown.markdown(self.content, extensions=extensions)
+        return markdown.markdown(
+            self.content,
+            extensions=extensions,
+            extension_configs={
+                'codehilite': {
+                    'linenums': True
+                }
+            })
 
     def last_modified_by_username(self):
         user = User.fetch_by_id(self.last_modified_by_user_id)
