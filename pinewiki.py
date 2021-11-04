@@ -1,5 +1,6 @@
 
 import datetime
+import dateutil.tz
 import re
 from flask import g, Flask, render_template, request, redirect, url_for, flash, send_file, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
@@ -131,9 +132,11 @@ def recent_changes():
 @login_required
 def todays_calendar():
     today = datetime.date.today()
+    now_utc = datetime.datetime.now(tz=dateutil.tz.tzutc())
+    now_local = now_utc.astimezone(dateutil.tz.tzlocal())
     return redirect(url_for(
         'view_calendar',
-        year=today.year, month='{:02d}'.format(today.month)))
+        year=now_local.year, month='{:02d}'.format(now_local.month)))
 
 @app.route('/calendar/<int:year>/<int:month>', methods=['GET'])
 @login_required
