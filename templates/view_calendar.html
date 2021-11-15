@@ -21,7 +21,10 @@
     {% if day == 0 %}
     <td class="day outsidemonth"></td>
     {% else %}
-    <td class="day insidemonth{{' current_day' if today.day == day and today.month == calendar.month else ''}}">
+    <td
+      class="day insidemonth{{' current_day' if today.day == day and today.month == calendar.month else ''}}"
+      onclick="location.href='{{url_for('edit_page', pagename=calendar.pagename_for_day(day))}}'"
+      >
       <div class="day_wrapper_1"><div class="day_wrapper_2">
       <div class="datenumber">
 	<a href="{{url_for('edit_page', pagename=calendar.pagename_for_day(day))}}">{{day}}</a>

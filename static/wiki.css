@@ -240,6 +240,7 @@ table.calendar td.day {
     height: 8em;
     vertical-align: top;
     padding: 0.15em 0.25em;
+    cursor: pointer;
 }
 table.calendar td.insidemonth { border: 1px solid #aaa; background-color: white; }
 table.calendar td.outsidemonth { border: none; }
