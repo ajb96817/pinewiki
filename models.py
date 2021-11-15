@@ -282,7 +282,7 @@ class CalendarHelper(calendar.Calendar):
         self.year = year
 
     def breadcrumbs(self):
-        return [('calendar', 'calendar', True)]
+        return [('start', 'start', False), ('calendar', 'calendar', True)]
 
     def prev_and_next_month_and_year(self):
         ym = self.year*12 + (self.month-1)
@@ -398,7 +398,7 @@ class FileHelper:
         self.basedir = '/'.join([flask.current_app.root_path, 'files'])
 
     def breadcrumbs(self):
-        return [('files', 'files', True)]
+        return [('start', 'start', False), ('files', 'files', True)]
 
     PATH_COMPONENT_REGEX = re.compile(r'^[a-zA-Z0-9_]+$')
 
@@ -610,7 +610,7 @@ class FileHelper:
 
 class ChatroomHelper:
     def breadcrumbs(self):
-        return [('chat', 'chat', True)]
+        return [('start', 'start', False), ('chat', 'chat', True)]
     
     # Convert a chat pagename like chat:123456.454325 and return a formatted
     # timestamp in the local timezone.
@@ -711,7 +711,12 @@ class Database:
         return h.hexdigest()
 
     def create_user(self, username, password):
-        profile = {'chat_color': ChatroomHelper.COLORS[0], 'notifications': 'any'}
+        profile = {
+            'chat_color': ChatroomHelper.COLORS[0],
+            'notifications': 'any',
+            'status': 'idle',
+            'status_message': ''
+        }
         password_sha1 = self.hash_password(password)
         profile_json = json.dumps(profile)
         c = self.db.cursor()
@@ -719,7 +724,7 @@ class Database:
                   (username, password_sha1, profile_json))
         user_id = c.lastrowid
         self.db.commit()
-        # set "real" chat color
+        # set "real" chat color (user ID is needed for this)
         user = self.fetch_user_by_id(user_id)
         chat_color = ChatroomHelper.COLORS[(user_id-1) % len(ChatroomHelper.COLORS)]
         user.profile['chat_color'] = chat_color

@@ -123,7 +123,7 @@ def recent_changes():
         'changes.html',
         pagename='recent changes',
         toolbar_selection='recent_changes',
-        breadcrumbs=[('changes', 'changes', True)],
+        breadcrumbs=[('start', 'start', False), ('changes', 'changes', True)],
         page_number=page_number,
         events=events,
         more_available=more_available)
@@ -368,7 +368,7 @@ def view_sitemap():
         'view_sitemap.html',
         toolbar_selection='sitemap',
         pagename='sitemap',
-        breadcrumbs=[('sitemap', 'sitemap', True)],
+        breadcrumbs=[('start', 'start', False), ('sitemap', 'sitemap', True)],
         page_infos=page_infos)
 
 @app.route('/search', methods=['GET', 'POST'])

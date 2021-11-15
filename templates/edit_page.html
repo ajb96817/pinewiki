@@ -14,6 +14,68 @@
       <input type="button" name="decryptButton" value="Decrypt" accesskey="d" value="DecryptSecret" onclick="return decryptEditForm();"></input>
       {% endif %}
       <button type="submit" name="action" value="cancel">Cancel</button>
+      - <a href="#" onclick="document.getElementById('syntax_guide').style.display='block';">Show syntax quick reference</a>
+      <div id="syntax_guide" style="display:none; padding-top: 1em;">
+        <div><a href="https://daringfireball.net/projects/markdown/syntax">View the full Markdown reference document here</a></div>
+        <table>
+          <thead>
+            <tr>
+              <th>Input Syntax</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>First-level header<br />==================</code></td>
+              <td><h1>First-level header</h1></td>
+            </tr>
+            <tr>
+              <td><code>Second-level header<br />-------------------</code></td>
+              <td><h2>Second-level header</h2></td>
+            </tr>
+            <tr>
+              <td><code>### Other headers (1 to 6 marks)</code></td>
+              <td><h3>Other headers (1 to 6 marks)</h3></td>
+            </tr>
+            <tr>
+              <td><code>==== Alternative header syntax ====</code></td>
+              <td><h3>Alternative header syntax</h3></td>
+            </tr>
+            <tr>
+              <td><code>&gt; Block quote<br />&gt;&nbsp;&gt; Nested block quote</code></td>
+              <td><blockquote>Block quote<blockquote>Nested block quote</blockquote></blockquote></td>
+            </tr>
+            <tr>
+              <td><code>* Unordered list<br >* Second item</code></td>
+              <td><ul><li>Unordered list</li><li>Second item</li></ul></td>
+            </tr>
+            <tr>
+              <td><code>1. Numbered list<br >2. Second item</code></td>
+              <td><ol><li>Numbered list</li><li>Second item</li></ol></td>
+            </tr>
+            <tr>
+              <td><code>&nbsp;&nbsp;&nbsp;&nbsp;Code block<br />&nbsp;&nbsp;&nbsp;&nbsp;(indent 4 spaces)</code></td>
+              <td><code>&nbsp;&nbsp;&nbsp;&nbsp;Code block<br />&nbsp;&nbsp;&nbsp;&nbsp;(indent 4 spaces)</code></td>
+            </tr>
+            <tr>
+              <td><code>Horizontal rule:<br />----</code></td>
+              <td>Horizontal rule:<hr /></td>
+            </tr>
+            <tr>
+              <td><code>This is [an example](http://example.com/ "Title") inline link.<br />[This link](http://example.net/) has no title attribute.</code></td>
+              <td>This is <a href="http://example.com/" title="Title">
+an example</a> inline link.<br />
+<a href="http://example.net/">This link</a> has no
+title attribute.
+              </td>
+            </tr>
+            <tr>
+              <td><code>_italic_, *italic*, __bold__, **bold**</code></td>
+              <td><em>italic</em>, <em>italic</em>, <strong>bold</strong>, <strong>bold</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
       <br />
       {% if rendered_preview %}
       <p>

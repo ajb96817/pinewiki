@@ -1,0 +1,43 @@
+
+# adduser ajb
+# apt update
+# apt upgrade
+# reboot now
+# apt install emacs-nox
+# visudo
+   -> add at end: ajb ALL=(ALL) NOPASSWD:ALL
+-> log in as ajb instead of root
+$ ssh-keygen
+$ sudo apt install python3-pip
+  -> add local .ssh/id_rsa.pub to remote .ssh/authorized_keys
+$ sudo pip3 install ipython
+$ sudo pip3 install flask flask-login markdown python-dateutil
+$ sudo apt install apache2 libapache2-mod-wsgi-py3
+$ sudo apt install git
+$ sudo mkdir /var/www/pinewiki
+$ sudo chown ajb:ajb /var/www/pinewiki
+
+-> SSL certificate setup (via Let's Encrypt / certbot):
+$ sudo snap install core
+$ sudo snap refresh core
+$ sudo snap install --classic certbot
+$ sudo ln -s /snap/bin/certbot /usr/bin/certbot
+$ sudo a2enmod ssl
+-> edit /etc/apache2/sites-available/000-default.conf and change the ServerName
+$ sudo certbot --apache
+-> place pinewiki 000-default.conf in /etc/apache2/sites-available
+
+-> timezone configuration
+$ sudo rm /etc/localtime
+$ sudo ln -s /usr/share/zoneinfo/US/Hawaii /etc/localtime
+-> verify with 'timedatectl'
+
+$ cd /var/www/pinewiki
+$ git clone https://github.com/ajb96817/pinewiki.git .
+$ mkdir -p files
+
+-> visit site in a web browser to create db/pine.sqlite3
+
+-> importing data:
+$ ipython3 -i migrate.py
+  -> > go()
