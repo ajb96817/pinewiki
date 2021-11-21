@@ -4,7 +4,7 @@ import dateutil.tz
 import re
 from flask import g, Flask, render_template, request, redirect, url_for, flash, send_file, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from models import Database, Page, User, CalendarHelper, ChatroomHelper, FileHelper
+from models import Database, Page, User, CalendarHelper, ChatroomHelper, JournalHelper, FileHelper
 
 
 app = Flask(__name__)
@@ -239,6 +239,54 @@ def post_chat():
 def delete_chat_item(pagename):
     g.database.delete_chat_page(pagename)  # NOTE: this handles validation of pagename itself
     return redirect(url_for('view_chat'))
+
+@app.route('/journal', defaults={'user_id': ''})
+@app.route('/journal', methods=['GET'])
+@login_required
+def view_journal():
+    helper = JournalHelper()
+    
+    # TODO: factor out the following 3 lines
+    today = datetime.date.today()
+    now_utc = datetime.datetime.now(tz=dateutil.tz.tzutc())
+    now_local = now_utc.astimezone(dateutil.tz.tzlocal())
+
+    helper.load_all_pagenames_set()
+    entry_summary = helper.build_entry_summary(current_user.user_id)
+    
+    # journal_pages = g.database.fetch_journal_pages_in_month(
+    #     current_user.user_id, now_local.month, now_local.year)
+
+    journal_pages = []
+    return render_template(
+        'view_journal.html',
+        toolbar_selection='journal',
+        pagename='journal',
+        breadcrumbs=helper.breadcrumbs(),
+        helper=helper,
+        entry_summary=entry_summary,
+        journal_pages=journal_pages,
+        current_date_string=now_local.strftime('%d-%b-%Y'),
+        current_time_string=now_local.strftime('%-I:%M%p').lower())
+
+@app.route('/journal', methods=['POST'])
+@login_required
+def post_journal_entry():
+    content = request.form['page_content'].strip()
+    action = request.form['action']
+    helper = JournalHelper()
+    if action == 'save':
+        helper.post_journal_entry(
+            content, current_user.user_id,
+            request.form['entry_date'],
+            request.form['entry_time'])
+        g.database.create_notification(
+            'journal',
+            '{} posted a new journal entry'.format(current_user.username),
+            current_user.user_id)
+    return redirect(url_for('view_journal'))
+    
+
 
 @app.route('/files', defaults={'path': ''})
 @app.route('/files/<path:path>')

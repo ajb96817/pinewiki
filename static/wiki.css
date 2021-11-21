@@ -272,6 +272,16 @@ table.calendar div.day_wrapper_2 {
 }
 
 
+div.journal_date_selector {
+    float: left;
+    width: 16em;
+    padding: 0.25em 0.5em;
+    height: 100%;
+    border: 2px solid #ddd;
+    background-color: #eee;
+}
+
+
 div.sitemap { padding: 1em 2em; }
 table.sitemap th {
     border-bottom: 1px solid #ccc;

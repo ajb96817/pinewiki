@@ -300,17 +300,18 @@ class CalendarHelper(calendar.Calendar):
         return 'calendar:{:02d}_{}_{:04d}'.format(
             day, calendar.month_name[self.month].lower(), self.year)
 
+    PAGENAME_REGEX = re.compile(r'calendar:(?P<day>\d+)_(?P<monthname>\w+)_(?P<year>\d+)$')
+
     @classmethod
     def parse_calendar_pagename(self, pagename):
-        regex = re.compile(r'calendar:(?P<day>\d+)_(?P<monthname>\w+)_(?P<year>\d+)')
-        match = regex.match(pagename)
+        match = self.PAGENAME_REGEX.match(pagename)
         if match:
             return '{} {}, {}'.format(
                 match.group('monthname').capitalize(),
                 int(match.group('day')),
                 match.group('year'))
         else:
-            return None;
+            return None
 
     def load_pages_in_range(self):
         self.page_table = {}
@@ -612,7 +613,7 @@ class ChatroomHelper:
     def breadcrumbs(self):
         return [('start', 'start', False), ('chat', 'chat', True)]
     
-    # Convert a chat pagename like chat:123456.454325 and return a formatted
+    # Convert a chat pagename like chat:123456_454325 and return a formatted
     # timestamp in the local timezone.
     def formatted_time_from_chat_pagename(self, pagename):
         timestamp = int(float(pagename.split(':')[1].replace('_', '.')))
@@ -629,6 +630,117 @@ class ChatroomHelper:
         page = Page(pagename, content)
         page.last_modified_by_user_id = user_id
         g.database.update_page(page)
+
+
+# journal page name format:
+# journal:user_id:12_nov_2021_04_32pm
+class JournalHelper:
+    def breadcrumbs(self):
+        return [('start', 'start', False), ('journal', 'journal', True)]
+
+    def load_all_pagenames_set(self):
+        self.pagenames_set = g.database.fetch_all_pagenames_set()
+
+    PAGENAME_REGEX = re.compile(
+        r'journal:user_(?P<user_id>\d+):(?P<day>\d+)_(?P<month_abbr>[a-z]+)_(?P<year>\d+):(?P<hour>\d+)_(?P<minute>\d+)(?P<ampm>[ap]m)$')
+
+    # Build map of lowercase_month_abbr -> month_index
+    MONTH_ABBR_MAP = dict()
+    for month_index, month_abbr in enumerate(calendar.month_abbr):
+        MONTH_ABBR_MAP[month_abbr.lower()] = month_index
+
+    @classmethod
+    def parse_journal_pagename(self, pagename):
+        match = self.PAGENAME_REGEX.match(pagename)
+        if match is None:
+            return None
+        month_abbr = match.group('month_abbr')
+        ampm_offset = 0 if match.group('ampm') == 'am' else 12
+        month_index = self.MONTH_ABBR_MAP[month_abbr]
+        if month_index == 0:
+            return None  # shouldn't happen
+        return {
+            'user_id': int(match.group('user_id')),
+            'year': int(match.group('year')),
+            'month_abbr': month_abbr,
+            'month_index': month_index,
+            'day': int(match.group('day')),
+            'hour': int(match.group('hour')) + ampm_offset,
+            'minute': int(match.group('minute'))
+        }
+
+    @classmethod
+    def pagename_for_user_id_and_datetime(self, user_id, dt):
+        formatted_dt = dt.strftime('%d_%b_%Y:%I_%M%p').lower()
+        return 'journal:user_{}:{}'.format(user_id, formatted_dt)
+
+    # Build journal entry summary for the given user_id.
+    # Entries are sorted by descending timestamp (newest first).
+    # NOTE: load_all_pagenames_set() must have been called first before using this.
+    # Returns a list of dictionaries of the form:
+    #   { 'year': 2021, 'month': 10, 'pagenames': [...] }
+    def build_entry_summary(self, user_id):
+        # Build map of pagename->parsed_info
+        pagename_to_parsed_map = dict()
+        # Keep track of year+month date range as pages are scanned
+        newest_ym = oldest_ym = None
+        for pagename in self.pagenames_set:
+            parsed = JournalHelper.parse_journal_pagename(pagename)
+            if parsed is None:
+                continue  # Not actually a journal page
+            if parsed['user_id'] != user_id:
+                continue  # Only interested in entries by the given user_id
+            pagename_to_parsed_map[pagename] = parsed
+            # Extend year/month bounds as pages are examined
+            ym = (parsed['year'], parsed['month_index'])
+            if newest_ym is None or ym > newest_ym:
+                newest_ym = ym
+            if oldest_ym is None or ym < oldest_ym:
+                oldest_ym = ym
+
+        # Generate the table of all (year, month) pairs that will be used, in the correct
+        # order.  Note that the tuples will still be there even if there's no journal
+        # entries on a particular month - all that matters is the beginning and end
+        # year/month range.
+        summary_items = []  # one for each year/month
+        ym_to_item_map = dict()  # maps (year, month) -> entries in the above
+        for year in range(newest_ym[0], oldest_ym[0]-1, -1):
+            for month in range(12, 0, -1):
+                ym = (year, month)
+                if ym <= newest_ym and ym >= oldest_ym:
+                    summary_item = {
+                        'year': year, 'month_index': month,
+                        'month_name': calendar.month_name[month], 'pagenames': []
+                    }
+                    summary_items.append(summary_item)
+                    ym_to_item_map[ym] = summary_item
+
+        # Sort journal pagenames in descending order for further processing.
+        print(pagename_to_parsed_map.keys())
+        def sortkey(item):
+            p = item[1]
+            return (p['year'], p['month_index'], p['day'], p['hour'], p['minute'])
+        sorted_journal_items = sorted(
+            pagename_to_parsed_map.items(),
+            key=sortkey, reverse=True)
+
+        # Populate all the pagenames into summary_items.
+        for pagename, parsed in sorted_journal_items:
+            summary_item = ym_to_item_map[(parsed['year'], parsed['month_index'])]
+            summary_item['pagenames'].append(pagename)
+
+        return summary_items
+
+    # Returns created/updated Page object
+    def post_journal_entry(self, content, user_id, entry_date_string, entry_time_string):
+        parsed_dt = dateutil.parser.parse('{} {}'.format(entry_date_string, entry_time_string))
+        # TODO: handle errors
+        pagename = JournalHelper.pagename_for_user_id_and_datetime(user_id, parsed_dt)
+        # TODO: merge already-existing pages with new content
+        page = Page(pagename, content)
+        page.last_modified_by_user_id = user_id
+        g.database.update_page(page)
+        return page
 
 
 class Database:
@@ -880,7 +992,6 @@ class Database:
             return
         elif pagename.startswith('calendar:'):
             parsed_date_string = CalendarHelper.parse_calendar_pagename(pagename)
-            print(pagename, parsed_date_string)
             if parsed_date_string is None:
                 message = '{} edited the calendar'.format(user.username)
             else:
@@ -959,6 +1070,20 @@ from page where name >= ? and name like ? order by name desc limit ?''',
             p = Page(row[0], row[1])
             pages.append(p)
         return pages
+
+#     def fetch_journal_pages_in_month(self, user_id, month, year):
+#         pattern = 'journal:{}:%_{}_{:04d}_%'.format(
+#             user_id, calendar.month_name[month].lower(), year)
+#         pages = []
+#         for row in self.db.execute('''
+# select name, content, last_modified_timestamp, last_modified_by_user_id
+# from page where name like ? order by name desc''',
+#                                    (pattern,)):
+#             p = Page(row[0], row[1])
+#             p.last_modified_timestamp = row[2]
+#             p.last_modified_by_user_id = row[3]
+#             pages.append(p)
+#         return pages
 
     def fetch_recent_events(self, limit=20, skip=0):
         events = []
