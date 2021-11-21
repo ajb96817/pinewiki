@@ -240,24 +240,34 @@ def delete_chat_item(pagename):
     g.database.delete_chat_page(pagename)  # NOTE: this handles validation of pagename itself
     return redirect(url_for('view_chat'))
 
-@app.route('/journal', defaults={'user_id': ''})
-@app.route('/journal', methods=['GET'])
+@app.route('/journal', defaults={'user_id': 0, 'year': 0, 'month': 0})
+@app.route('/journal/<int:year>/<int:month>', methods=['GET'])
 @login_required
-def view_journal():
-    helper = JournalHelper()
-    
+def view_journal(year, month, user_id):
     # TODO: factor out the following 3 lines
     today = datetime.date.today()
     now_utc = datetime.datetime.now(tz=dateutil.tz.tzutc())
     now_local = now_utc.astimezone(dateutil.tz.tzlocal())
 
+    helper = JournalHelper()
     helper.load_all_pagenames_set()
-    entry_summary = helper.build_entry_summary(current_user.user_id)
-    
-    # journal_pages = g.database.fetch_journal_pages_in_month(
-    #     current_user.user_id, now_local.month, now_local.year)
-
-    journal_pages = []
+    if user_id == 0:
+        user_id = current_user.user_id
+    entry_summary = helper.build_entry_summary(user_id)
+    if year == 0:
+        year = now_local.year
+    if month == 0:
+        month = now_local.month
+    current_summary_item = None
+    for item in entry_summary:
+        if item['year'] == year and item['month_index'] == month:
+            current_summary_item = item
+    if current_summary_item:
+        pagenames = current_summary_item['pagenames']
+    else:
+        pagenames = []
+    journal_pages = g.database.fetch_pages(pagenames)
+    current_timestamp_string = now_local.strftime('%d-%b-%Y at %-I:%M') + now_local.strftime('%p').lower()
     return render_template(
         'view_journal.html',
         toolbar_selection='journal',
@@ -266,8 +276,12 @@ def view_journal():
         helper=helper,
         entry_summary=entry_summary,
         journal_pages=journal_pages,
-        current_date_string=now_local.strftime('%d-%b-%Y'),
-        current_time_string=now_local.strftime('%-I:%M%p').lower())
+        current_timestamp_string=current_timestamp_string)
+
+# @app.route('/journal/delete/<pagename>')
+# @login_required
+# def delete_journal_entry(pagename):
+#     pass
 
 @app.route('/journal', methods=['POST'])
 @login_required

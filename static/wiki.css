@@ -273,13 +273,23 @@ table.calendar div.day_wrapper_2 {
 
 
 div.journal_date_selector {
-    float: left;
+    float: right;
     width: 16em;
     padding: 0.25em 0.5em;
     height: 100%;
     border: 2px solid #ddd;
     background-color: #eee;
 }
+div.journal_new_entry_area {
+    margin-bottom: 1em;
+}
+div.journal_timestamp {
+    font-size: 120%;
+}
+div.journal_timestamp a {
+    border-bottom: 3px solid #ccc;
+}
+
 
 
 div.sitemap { padding: 1em 2em; }

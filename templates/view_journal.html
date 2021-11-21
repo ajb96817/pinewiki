@@ -10,52 +10,49 @@
     <div class="journal_date_selector">
       <ul>
         {% for summary_item in entry_summary %}
-        <li>
-          <a href="#">{{summary_item['month_name']}}&nbsp;{{summary_item['year']}}&nbsp;({{summary_item['pagenames']|length}})</a>
-        </li>
+        <li><a href="#">{{summary_item['month_name']}}&nbsp;{{summary_item['year']}}&nbsp;({{summary_item['pagenames']|length}})</a></li>
         {% endfor %}
       </ul>
     </div>
 
     <div class="journal_new_entry_area">
-      {% if rendered_preview %}
-      <div>Your journal entry will appear as shown above.  Press Post to commit your changes.</div>
-      {% else %}
-      <button value="post" onclick="document.getElementById('post_message_form').style.display='block'; document.getElementById('post_message_button').style.display='none';" id="post_message_button">Create a new entry</button>
-      {% endif %}
-      <form id="post_message_form" style="display: {{'block' if rendered_preview else 'none'}};" method="post" accept-charset="utf-8" class="post_journal_entry">
-	{% if not rendered_preview %}
-	<div>Create a new entry:</div>
-	{% endif %}
-        <div class="journal_timestamp">
-          <label for="entry_date">Date</label>
-          <input type="text" name="entry_date" value="{{current_date_string}}"></input>
-          <label for="entry_time">Time</label>
-          <input type="text" name="entry_time" value="{{current_time_string}}"></input>
+      <button value="post" onclick="document.getElementById('new_entry_form').style.display='block'; document.getElementById('new_entry_button').style.display='none';" id="new_entry_button">Create a new entry</button>
+      <form id="new_entry_form" style="display: none;" method="post" accept-charset="utf-8" class="post_journal_entry">
+        <div class="post_journal_entry_header">
+          <label for="entry_timestamp">Date/Time</label>
+          <input type="text" name="entry_timestamp" value="{{current_timestamp_string}}"></input>
         </div>
-	<textarea name="page_content" rows="8" cols="80" autofocus>{{chat_content}}</textarea>
-	<button type="submit" name="action" value="save" accesskey="s">Post</button>
-	<button type="submit" name="action" value="preview" accesskey="v">Preview</button>
+	<textarea name="entry_content" rows="8" cols="80"></textarea>
+        <div class="post_journal_entry_controls">
+	  <button type="submit" name="action" value="save" accesskey="s">Post</button>
+	  <button type="submit" name="action" value="cancel" accesskey="c" onclick="document.getElementById('new_entry_form').style.display='none'; document.getElementById('new_entry_button').style.display='block'; return false;">Cancel</button>
+        </div>
       </form>
     </div>
 
     <div class="journal_entries_container">
     {% for page in journal_pages %}
-    {% if loop.index0 > 0 and journal_pages[loop.index0-1].last_modified_date() != page.last_modified_date() %}
-    <div class="journal_date_separator">{{page.formatted_last_modified_date()}}</div>
-    {% endif %}
-    <div class="journal_entry">
-      <div class="journal_entry_timestamp">
-        ???
-	<div class="journal_actions">
-	  <a href="{{url_for('edit_page', pagename=page.name)}}">Edit</a> -
-	  <a href="{{url_for('delete_journal_entry', pagename=page.name)}}" onclick="return confirm('Really delete this journal entry?')">Delete</a>
-	</div>
+    <div class="journal_entry" id="journal_entry_{{loop.index0}}">
+      <div class="journal_entry_header">
+        <div class="journal_timestamp">
+          <a href="#" onclick="document.getElementById('edit_entry_form_{{loop.index0}}').style.display='block'; document.getElementById('journal_entry_{{loop.index0}}').style.display='none';">{{helper.formatted_time_from_journal_pagename(page.name)}}</a>
+        </div>
       </div>
       <div class="journal_content">
 	{{page.content_as_markdown()|safe}}
       </div>
     </div>
+    <form id="edit_entry_form_{{loop.index0}}" style="display: none;" method="post" accept-charset="utf-8" class="post_journal_entry">
+      <div class="post_journal_entry_header">
+        <label for="entry_timestamp">Date/Time</label>
+        <input type="text" name="entry_timestamp" value="{{helper.formatted_time_from_journal_pagename(page.name)}}"></input>
+      </div>
+      <textarea name="entry_content" rows="8" cols="80">{{page.content}}</textarea>
+      <div class="post_journal_entry_controls">
+        <button type="submit" name="action" value="save">Save Changes</button>
+	<button name="action" value="cancel" onclick="document.getElementById('edit_entry_form_{{loop.index0}}').style.display='none'; document.getElementById('journal_entry_{{loop.index0}}').style.display='block'; return false;">Cancel</button>
+      </div>
+    </form>
     {% endfor %}
     </div>
   </div>

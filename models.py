@@ -731,6 +731,14 @@ class JournalHelper:
 
         return summary_items
 
+    def formatted_time_from_journal_pagename(self, pagename):
+        parsed = JournalHelper.parse_journal_pagename(pagename)
+        hour = (parsed['hour']-1)%12 + 1
+        ampm = 'pm' if parsed['hour'] >= 12 else 'am'
+        return '''{:02d}-{}-{:04d} at {}:{:02d}{}'''.format(
+            parsed['day'], parsed['month_abbr'].capitalize(), parsed['year'],
+            hour, parsed['minute'], ampm)
+
     # Returns created/updated Page object
     def post_journal_entry(self, content, user_id, entry_date_string, entry_time_string):
         parsed_dt = dateutil.parser.parse('{} {}'.format(entry_date_string, entry_time_string))
@@ -912,15 +920,31 @@ class Database:
                         (event_type, event_target, event_target_2, bytes_changed, content, user_id))
 
     def fetch_page(self, pagename):
-        row = self.db.execute('''select name, content, last_modified_timestamp, last_modified_by_user_id from page where name = ?''',
-                              (pagename,)).fetchone()
-        if row:
+        # row = self.db.execute('''select name, content, last_modified_timestamp, last_modified_by_user_id from page where name = ?''',
+        #                       (pagename,)).fetchone()
+        # if row:
+        #     p = Page(row[0], row[1])
+        #     p.last_modified_timestamp = row[2]
+        #     p.last_modified_by_user_id = row[3]
+        #     return p
+        # else:
+        #     return None
+        pages = self.fetch_pages([pagename])
+        if len(pages) == 1:
+            return pages[0]
+        else:
+            return None
+
+    # NOTE: pages will be returned in the same order as in 'pagenames'.
+    def fetch_pages(self, pagenames):
+        in_clause = ','.join(['"'+p+'"' for p in pagenames])
+        pages = []
+        for row in self.db.execute('''select name, content, last_modified_timestamp, last_modified_by_user_id from page where name in ({})'''.format(in_clause,)):
             p = Page(row[0], row[1])
             p.last_modified_timestamp = row[2]
             p.last_modified_by_user_id = row[3]
-            return p
-        else:
-            return None
+            pages.append(p)
+        return pages
 
     def update_page(self, page):
         old_page = self.fetch_page(page.name)
@@ -1070,20 +1094,6 @@ from page where name >= ? and name like ? order by name desc limit ?''',
             p = Page(row[0], row[1])
             pages.append(p)
         return pages
-
-#     def fetch_journal_pages_in_month(self, user_id, month, year):
-#         pattern = 'journal:{}:%_{}_{:04d}_%'.format(
-#             user_id, calendar.month_name[month].lower(), year)
-#         pages = []
-#         for row in self.db.execute('''
-# select name, content, last_modified_timestamp, last_modified_by_user_id
-# from page where name like ? order by name desc''',
-#                                    (pattern,)):
-#             p = Page(row[0], row[1])
-#             p.last_modified_timestamp = row[2]
-#             p.last_modified_by_user_id = row[3]
-#             pages.append(p)
-#         return pages
 
     def fetch_recent_events(self, limit=20, skip=0):
         events = []
