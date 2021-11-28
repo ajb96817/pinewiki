@@ -61,9 +61,15 @@ def front_page():
 def view_page(pagename):
     page = g.database.fetch_page(pagename) or Page(pagename)
     rendered_markdown = page.content_as_markdown()
+    if pagename == 'start':
+        toolbar_selection = 'start'
+    elif page.is_journal_page():
+        toolbar_selection = 'journal'
+    else:
+        toolbar_selection = None
     return render_template(
         'view_page.html',
-        toolbar_selection=('start' if pagename == 'start' else None),
+        toolbar_selection=toolbar_selection,
         page=page,
         pagename=pagename,
         breadcrumbs=page.breadcrumbs(),
@@ -73,12 +79,18 @@ def view_page(pagename):
 @login_required
 def edit_page(pagename):
     page = g.database.fetch_page(pagename) or Page(pagename)
+    if page.is_journal_page():
+        journal_page_timestamp = JournalHelper().formatted_time_from_journal_pagename(page.name)
+        is_owned_journal_page = JournalHelper.parse_journal_pagename(page.name)['user_id'] == current_user.user_id
     if request.method == 'GET':
         return render_template(
             'edit_page.html',
             page=page,
             pagename=pagename,
-            breadcrumbs=page.breadcrumbs())
+            breadcrumbs=page.breadcrumbs(),
+            toolbar_selection=('journal' if page.is_journal_page() else None),
+            journal_page_timestamp=journal_page_timestamp,
+            is_owned_journal_page=is_owned_journal_page)
     elif request.method == 'POST':
         encrypted_content = request.form['encrypted_page_content']
         if len(encrypted_content) > 0:
@@ -240,10 +252,10 @@ def delete_chat_item(pagename):
     g.database.delete_chat_page(pagename)  # NOTE: this handles validation of pagename itself
     return redirect(url_for('view_chat'))
 
-@app.route('/journal', defaults={'user_id': 0, 'year': 0, 'month': 0})
+@app.route('/journal', defaults={'year': 0, 'month': 0})
 @app.route('/journal/<int:year>/<int:month>', methods=['GET'])
 @login_required
-def view_journal(year, month, user_id):
+def view_journal(year, month):
     # TODO: factor out the following 3 lines
     today = datetime.date.today()
     now_utc = datetime.datetime.now(tz=dateutil.tz.tzutc())
@@ -251,8 +263,9 @@ def view_journal(year, month, user_id):
 
     helper = JournalHelper()
     helper.load_all_pagenames_set()
-    if user_id == 0:
-        user_id = current_user.user_id
+    all_users = g.database.fetch_all_users()  # for user dropdown selector
+    user_id = int(request.args.get('user_id', current_user.user_id))
+    journal_user = g.database.fetch_user_by_id(user_id)
     entry_summary = helper.build_entry_summary(user_id)
     if year == 0:
         year = now_local.year
@@ -276,12 +289,9 @@ def view_journal(year, month, user_id):
         helper=helper,
         entry_summary=entry_summary,
         journal_pages=journal_pages,
+        all_users=all_users,
+        journal_user=journal_user,
         current_timestamp_string=current_timestamp_string)
-
-# @app.route('/journal/delete/<pagename>')
-# @login_required
-# def delete_journal_entry(pagename):
-#     pass
 
 @app.route('/journal', methods=['POST'])
 @login_required
@@ -300,6 +310,10 @@ def post_journal_entry():
             current_user.user_id)
     return redirect(url_for('view_journal'))
     
+@app.route('/change_journal_timestamp/<pagename>', methods=['GET', 'POST'])
+@login_required
+def change_journal_timestamp(pagename):
+    return 'not yet implemented'
 
 
 @app.route('/files', defaults={'path': ''})

@@ -8,13 +8,22 @@
   </div>
   <div class="page_content content_box">
     <form method="post" accept-charset="utf-8" class="edit_page" id="edit_page_form" onsubmit="return encryption_editFormOnSubmit()">
+      {% if journal_page_timestamp %}
+      <div class="journal_page_info">
+        This journal page has timestamp:
+        <strong>{{journal_page_timestamp}}</strong>
+        {% if is_owned_journal_page %}
+        &mdash; <a href="{{url_for('change_journal_timestamp', pagename=pagename)}}">Change timestamp</a>
+        {% endif %}
+      </div>
+      {% endif %}
       <button type="submit" name="action" value="save" accesskey="s" id="save_page_button">Save</button>
       <button type="submit" name="action" value="preview" accesskey="p">Preview</button>
       {% if page.has_encryption() %}
       <input type="button" name="decryptButton" value="Decrypt" accesskey="d" value="DecryptSecret" onclick="return decryptEditForm();"></input>
       {% endif %}
       <button type="submit" name="action" value="cancel">Cancel</button>
-      - <a href="#" onclick="document.getElementById('syntax_guide').style.display='block';">Show syntax quick reference</a>
+      &mdash; <a href="#" onclick="document.getElementById('syntax_guide').style.display='block';">Show syntax quick reference</a>
       <div id="syntax_guide" style="display:none; padding-top: 1em;">
         <div><a href="https://daringfireball.net/projects/markdown/syntax">View the full Markdown reference document here</a></div>
         <table>

@@ -335,8 +335,14 @@ class Page:
     def has_encryption(self):
         return '<ENCRYPTED' in self.content
                        
-    def is_empty(self):
+    def is_empty(self ):
         return self.content.strip() == ''
+
+    def journal_page_info(self):
+        return JournalHelper.parse_journal_pagename(self.name)
+
+    def is_journal_page(self):
+        return self.journal_page_info() != None
 
     # Returns a list of (parent_page_name, label, is_last)
     def breadcrumbs(self):
@@ -635,12 +641,6 @@ class ChatroomHelper:
 # journal page name format:
 # journal:user_id:12_nov_2021_04_32pm
 class JournalHelper:
-    def breadcrumbs(self):
-        return [('start', 'start', False), ('journal', 'journal', True)]
-
-    def load_all_pagenames_set(self):
-        self.pagenames_set = g.database.fetch_all_pagenames_set()
-
     PAGENAME_REGEX = re.compile(
         r'journal:user_(?P<user_id>\d+):(?P<day>\d+)_(?P<month_abbr>[a-z]+)_(?P<year>\d+):(?P<hour>\d+)_(?P<minute>\d+)(?P<ampm>[ap]m)$')
 
@@ -648,6 +648,12 @@ class JournalHelper:
     MONTH_ABBR_MAP = dict()
     for month_index, month_abbr in enumerate(calendar.month_abbr):
         MONTH_ABBR_MAP[month_abbr.lower()] = month_index
+
+    def breadcrumbs(self):
+        return [('start', 'start', False), ('journal', 'journal', True)]
+
+    def load_all_pagenames_set(self):
+        self.pagenames_set = g.database.fetch_all_pagenames_set()
 
     @classmethod
     def parse_journal_pagename(self, pagename):
@@ -716,7 +722,6 @@ class JournalHelper:
                     ym_to_item_map[ym] = summary_item
 
         # Sort journal pagenames in descending order for further processing.
-        print(pagename_to_parsed_map.keys())
         def sortkey(item):
             p = item[1]
             return (p['year'], p['month_index'], p['day'], p['hour'], p['minute'])
@@ -884,7 +889,6 @@ class Database:
         else:
             return None
 
-    # used for Admin screen
     def fetch_all_users(self):
         all_users = []
         for row in self.db.execute('''select id, username, profile from user order by id asc'''):
@@ -920,15 +924,6 @@ class Database:
                         (event_type, event_target, event_target_2, bytes_changed, content, user_id))
 
     def fetch_page(self, pagename):
-        # row = self.db.execute('''select name, content, last_modified_timestamp, last_modified_by_user_id from page where name = ?''',
-        #                       (pagename,)).fetchone()
-        # if row:
-        #     p = Page(row[0], row[1])
-        #     p.last_modified_timestamp = row[2]
-        #     p.last_modified_by_user_id = row[3]
-        #     return p
-        # else:
-        #     return None
         pages = self.fetch_pages([pagename])
         if len(pages) == 1:
             return pages[0]
@@ -944,6 +939,10 @@ class Database:
             p.last_modified_timestamp = row[2]
             p.last_modified_by_user_id = row[3]
             pages.append(p)
+        page_order_map = dict()
+        for index, pagename in enumerate(pagenames):
+            page_order_map[pagename] = index
+        pages.sort(key=lambda p: page_order_map[p.name])
         return pages
 
     def update_page(self, page):
