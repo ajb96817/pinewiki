@@ -126,7 +126,7 @@ def edit_page(pagename):
             # TODO: redirect to view_calendar with the correct month/year instead
             return redirect(url_for('todays_calendar'))
         elif page.is_journal_page():
-            return redirect(url_for('view_journal'))
+            return redirect(url_for('view_current_user_journal'))
         else:
             return redirect(url_for('view_page', pagename=page.name))
     
@@ -281,6 +281,12 @@ def view_user_journal(username):
         year=now_local.year,
         month=now_local.month))
 
+@app.route('/switch_journal_user')
+@login_required
+def switch_journal_user():
+    user = g.database.fetch_user_by_id(int(request.args.get('user_id')))
+    return redirect(url_for('view_user_journal', username=user.username))
+
 @app.route('/journal/<username>/<int:year>/<int:month>', methods=['GET'])
 @login_required
 def view_journal(username, year, month):
@@ -288,8 +294,8 @@ def view_journal(username, year, month):
     helper = JournalHelper()
     helper.load_all_pagenames_set()
     all_users = g.database.fetch_all_users()  # for user dropdown selector
-    user_id = int(request.args.get('user_id', current_user.user_id))
-    journal_user = g.database.fetch_user_by_id(user_id)
+    journal_user = g.database.fetch_user_by_username(username)
+    is_own_journal = journal_user.user_id == current_user.user_id
     entry_summary = helper.build_entry_summary(journal_user)
     if year == 0:
         year = now_local.year
@@ -315,6 +321,7 @@ def view_journal(username, year, month):
         journal_pages=journal_pages,
         all_users=all_users,
         journal_user=journal_user,
+        is_own_journal=is_own_journal,
         current_timestamp_string=current_timestamp_string,
         selected_year=year,
         selected_month=month)
