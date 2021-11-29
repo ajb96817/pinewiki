@@ -24,7 +24,7 @@
       {% endfor %}
     </ul>
     <div class="commands">
-      <a href="#" onclick="document.getElementById('create_folder_form').style.display='block'">Create folder</a>
+      <a href="#" onclick="document.getElementById('create_folder_form').style.display='block';return false;">Create folder</a>
       - <a href="{{url_for('upload_file', path=current_path)}}">Upload&nbsp;file</a>
       {% if path_is_deletable %}
       - <a href="{{url_for('delete_directory', path=current_path)}}"

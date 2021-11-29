@@ -88,6 +88,9 @@ def edit_page(pagename):
     if page.is_journal_page():
         journal_page_timestamp = JournalHelper().formatted_time_from_journal_pagename(page.name)
         is_owned_journal_page = JournalHelper.parse_journal_pagename(page.name)['username'] == current_user.username
+    else:
+        journal_page_timestamp = None
+        is_owned_journal_page = False
     if request.method == 'GET':
         return render_template(
             'edit_page.html',
