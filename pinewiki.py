@@ -15,6 +15,12 @@ app.config['SECRET_KEY'] = 'ueahrucahrou'
 app.config['MAX_CONTENT_LENGTH'] = 100*1024*1024  # max uploaded file size
 
 
+def current_local_timestamp():
+    today = datetime.date.today()
+    now_utc = datetime.datetime.now(tz=dateutil.tz.tzutc())
+    return now_utc.astimezone(dateutil.tz.tzlocal())
+
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.fetch_by_id(user_id)
@@ -81,7 +87,7 @@ def edit_page(pagename):
     page = g.database.fetch_page(pagename) or Page(pagename)
     if page.is_journal_page():
         journal_page_timestamp = JournalHelper().formatted_time_from_journal_pagename(page.name)
-        is_owned_journal_page = JournalHelper.parse_journal_pagename(page.name)['user_id'] == current_user.user_id
+        is_owned_journal_page = JournalHelper.parse_journal_pagename(page.name)['username'] == current_user.username
     if request.method == 'GET':
         return render_template(
             'edit_page.html',
@@ -119,6 +125,8 @@ def edit_page(pagename):
         elif pagename.startswith('calendar:'):
             # TODO: redirect to view_calendar with the correct month/year instead
             return redirect(url_for('todays_calendar'))
+        elif page.is_journal_page():
+            return redirect(url_for('view_journal'))
         else:
             return redirect(url_for('view_page', pagename=page.name))
     
@@ -143,12 +151,11 @@ def recent_changes():
 @app.route('/calendar', methods=['GET'])
 @login_required
 def todays_calendar():
-    today = datetime.date.today()
-    now_utc = datetime.datetime.now(tz=dateutil.tz.tzutc())
-    now_local = now_utc.astimezone(dateutil.tz.tzlocal())
+    now_local = current_local_timestamp()
     return redirect(url_for(
         'view_calendar',
-        year=now_local.year, month='{:02d}'.format(now_local.month)))
+        year=now_local.year,
+        month='{:02d}'.format(now_local.month)))
 
 @app.route('/calendar/<int:year>/<int:month>', methods=['GET'])
 @login_required
@@ -252,21 +259,38 @@ def delete_chat_item(pagename):
     g.database.delete_chat_page(pagename)  # NOTE: this handles validation of pagename itself
     return redirect(url_for('view_chat'))
 
-@app.route('/journal', defaults={'year': 0, 'month': 0})
-@app.route('/journal/<int:year>/<int:month>', methods=['GET'])
-@login_required
-def view_journal(year, month):
-    # TODO: factor out the following 3 lines
-    today = datetime.date.today()
-    now_utc = datetime.datetime.now(tz=dateutil.tz.tzutc())
-    now_local = now_utc.astimezone(dateutil.tz.tzlocal())
 
+@app.route('/journal', methods=['GET'])
+@login_required
+def view_current_user_journal():
+    now_local = current_local_timestamp()
+    return redirect(url_for(
+        'view_journal',
+        username=current_user.username,
+        year=now_local.year,
+        month=now_local.month))
+
+@app.route('/journal/<username>', methods=['GET'])
+@login_required
+def view_user_journal(username):
+    user = g.database.fetch_user_by_username(username) or current_user
+    now_local = current_local_timestamp()
+    return redirect(url_for(
+        'view_journal',
+        username=user.username,
+        year=now_local.year,
+        month=now_local.month))
+
+@app.route('/journal/<username>/<int:year>/<int:month>', methods=['GET'])
+@login_required
+def view_journal(username, year, month):
+    now_local = current_local_timestamp()
     helper = JournalHelper()
     helper.load_all_pagenames_set()
     all_users = g.database.fetch_all_users()  # for user dropdown selector
     user_id = int(request.args.get('user_id', current_user.user_id))
     journal_user = g.database.fetch_user_by_id(user_id)
-    entry_summary = helper.build_entry_summary(user_id)
+    entry_summary = helper.build_entry_summary(journal_user)
     if year == 0:
         year = now_local.year
     if month == 0:
@@ -285,30 +309,45 @@ def view_journal(year, month):
         'view_journal.html',
         toolbar_selection='journal',
         pagename='journal',
-        breadcrumbs=helper.breadcrumbs(),
+        breadcrumbs=helper.breadcrumbs(journal_user, year, month),
         helper=helper,
         entry_summary=entry_summary,
         journal_pages=journal_pages,
         all_users=all_users,
         journal_user=journal_user,
-        current_timestamp_string=current_timestamp_string)
+        current_timestamp_string=current_timestamp_string,
+        selected_year=year,
+        selected_month=month)
 
 @app.route('/journal', methods=['POST'])
 @login_required
 def post_journal_entry():
-    content = request.form['page_content'].strip()
+    content = request.form['entry_content'].strip()
     action = request.form['action']
     helper = JournalHelper()
-    if action == 'save':
-        helper.post_journal_entry(
-            content, current_user.user_id,
-            request.form['entry_date'],
-            request.form['entry_time'])
+
+    if action == 'save_with_system_time':
+        save_entry = True
+        entry_timestamp = current_local_timestamp()
+    elif action == 'save_with_custom_time':
+        save_entry = True
+        entry_timestamp = dateutil.parser.parse(request.form['entry_timestamp'])
+        # TODO: handle timestamp parsing errors
+    elif action == 'preview':
+        error("not yet implemented")
+    else:
+        save_entry = False
+
+    if save_entry:
+        helper.post_journal_entry(content, current_user, entry_timestamp)
         g.database.create_notification(
             'journal',
             '{} posted a new journal entry'.format(current_user.username),
             current_user.user_id)
-    return redirect(url_for('view_journal'))
+    return redirect(url_for('view_journal',
+                            username=current_user.username,
+                            year=entry_timestamp.year,
+                            month=entry_timestamp.month))
     
 @app.route('/change_journal_timestamp/<pagename>', methods=['GET', 'POST'])
 @login_required
@@ -490,7 +529,7 @@ def view_profile():
 @login_required
 @app.route('/profile', methods=['POST'])
 def update_profile():
-    current_user.username = request.form['username'].strip()
+    # current_user.username = request.form['username'].strip()
     current_user.profile['notifications'] = request.form['notification_preference']
     current_user.profile['chat_color'] = request.form['chat_color']
     g.database.save_user_changes(current_user)

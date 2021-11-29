@@ -639,18 +639,24 @@ class ChatroomHelper:
 
 
 # journal page name format:
-# journal:user_id:12_nov_2021_04_32pm
+# journal:username:12_nov_2021:04_32pm
 class JournalHelper:
     PAGENAME_REGEX = re.compile(
-        r'journal:user_(?P<user_id>\d+):(?P<day>\d+)_(?P<month_abbr>[a-z]+)_(?P<year>\d+):(?P<hour>\d+)_(?P<minute>\d+)(?P<ampm>[ap]m)$')
+        r'journal:(?P<username>\w+):(?P<day>\d+)_(?P<month_abbr>[a-z]+)_(?P<year>\d+):(?P<hour>\d+)_(?P<minute>\d+)(?P<ampm>[ap]m)$')
 
     # Build map of lowercase_month_abbr -> month_index
     MONTH_ABBR_MAP = dict()
     for month_index, month_abbr in enumerate(calendar.month_abbr):
         MONTH_ABBR_MAP[month_abbr.lower()] = month_index
 
-    def breadcrumbs(self):
-        return [('start', 'start', False), ('journal', 'journal', True)]
+    def breadcrumbs(self, user, year, month):
+        formatted_date = '{}_{}'.format(calendar.month_abbr[month].lower(), year)
+        return [
+            ('start', 'start', False),
+            ('journal', 'journal', False),
+            ('journal/{}'.format(user.username), user.username, False),
+            ('journal/{}/{}/{}'.format(user.username, year, month), formatted_date, True)
+        ]
 
     def load_all_pagenames_set(self):
         self.pagenames_set = g.database.fetch_all_pagenames_set()
@@ -663,10 +669,11 @@ class JournalHelper:
         month_abbr = match.group('month_abbr')
         ampm_offset = 0 if match.group('ampm') == 'am' else 12
         month_index = self.MONTH_ABBR_MAP[month_abbr]
+        username = match.group('username')
         if month_index == 0:
             return None  # shouldn't happen
         return {
-            'user_id': int(match.group('user_id')),
+            'username': match.group('username'),
             'year': int(match.group('year')),
             'month_abbr': month_abbr,
             'month_index': month_index,
@@ -676,16 +683,16 @@ class JournalHelper:
         }
 
     @classmethod
-    def pagename_for_user_id_and_datetime(self, user_id, dt):
+    def pagename_for_username_and_datetime(self, username, dt):
         formatted_dt = dt.strftime('%d_%b_%Y:%I_%M%p').lower()
-        return 'journal:user_{}:{}'.format(user_id, formatted_dt)
+        return 'journal:{}:{}'.format(username, formatted_dt)
 
-    # Build journal entry summary for the given user_id.
+    # Build journal entry summary for the given user.
     # Entries are sorted by descending timestamp (newest first).
     # NOTE: load_all_pagenames_set() must have been called first before using this.
     # Returns a list of dictionaries of the form:
     #   { 'year': 2021, 'month': 10, 'pagenames': [...] }
-    def build_entry_summary(self, user_id):
+    def build_entry_summary(self, user):
         # Build map of pagename->parsed_info
         pagename_to_parsed_map = dict()
         # Keep track of year+month date range as pages are scanned
@@ -694,7 +701,7 @@ class JournalHelper:
             parsed = JournalHelper.parse_journal_pagename(pagename)
             if parsed is None:
                 continue  # Not actually a journal page
-            if parsed['user_id'] != user_id:
+            if parsed['username'] != user.username:
                 continue  # Only interested in entries by the given user_id
             pagename_to_parsed_map[pagename] = parsed
             # Extend year/month bounds as pages are examined
@@ -710,6 +717,9 @@ class JournalHelper:
         # year/month range.
         summary_items = []  # one for each year/month
         ym_to_item_map = dict()  # maps (year, month) -> entries in the above
+        if newest_ym is None:
+            today = datetime.date.today()
+            newest_ym = oldest_ym = (today.year, today.month)
         for year in range(newest_ym[0], oldest_ym[0]-1, -1):
             for month in range(12, 0, -1):
                 ym = (year, month)
@@ -745,13 +755,11 @@ class JournalHelper:
             hour, parsed['minute'], ampm)
 
     # Returns created/updated Page object
-    def post_journal_entry(self, content, user_id, entry_date_string, entry_time_string):
-        parsed_dt = dateutil.parser.parse('{} {}'.format(entry_date_string, entry_time_string))
-        # TODO: handle errors
-        pagename = JournalHelper.pagename_for_user_id_and_datetime(user_id, parsed_dt)
+    def post_journal_entry(self, content, user, timestamp):
+        pagename = JournalHelper.pagename_for_username_and_datetime(user.username, timestamp)
         # TODO: merge already-existing pages with new content
         page = Page(pagename, content)
-        page.last_modified_by_user_id = user_id
+        page.last_modified_by_user_id = user.user_id
         g.database.update_page(page)
         return page
 
@@ -879,6 +887,15 @@ class Database:
         new_password_sha1 = self.hash_password('hello')
         self.db.execute('''update user set password_sha1 = ? where id = ?''',
                         (new_password_sha1, user_id))
+
+    def fetch_user_by_username(self, username):
+        row = self.db.execute('''select id, profile from user where username = ?''', (username,)).fetchone()
+        if row:
+            u = User(int(row[0]), username)
+            u.set_profile_json(row[1])
+            return u
+        else:
+            return None
 
     def fetch_user_by_id(self, user_id):
         row = self.db.execute('''select username, profile from user where id = ?''', (user_id,)).fetchone()

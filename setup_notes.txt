@@ -12,6 +12,7 @@ $ sudo apt install python3-pip
   -> add local .ssh/id_rsa.pub to remote .ssh/authorized_keys
 $ sudo pip3 install ipython
 $ sudo pip3 install flask flask-login markdown python-dateutil
+$ sudo pip3 install flask-shell-ipython
 $ sudo apt install apache2 libapache2-mod-wsgi-py3
 $ sudo apt install git
 $ sudo mkdir /var/www/pinewiki

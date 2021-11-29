@@ -10,34 +10,37 @@
     <div class="journal_navigation">
       <div class="journal_user_selector">
         <form id="journal_user_selector_form" method="get">
-          <div><strong>{{journal_user.username}}'s journal</strong></div>
+          <div class="current_journal_user"><strong>{{journal_user.username}}</strong>'s journal</div>
           <div>
-            <button type="submit">Switch to:</button>
             <select name="user_id">
               {% for user in all_users %}
-              <option>{{user.username}}</option>
+              <option value="{{user.user_id}}">{{user.username}}</option>
               {% endfor %}
             </select>
+            <button type="submit">Change user</button>
           </div>
         </form>
       </div>
       <ul>
         {% for summary_item in entry_summary %}
-        <li><a href="{{url_for('view_journal', year=summary_item['year'], month=summary_item['month_index'])}}">{{summary_item['month_name']}}&nbsp;{{summary_item['year']}}&nbsp;({{summary_item['pagenames']|length}})</a></li>
+        {% set is_selected = summary_item['year'] == selected_year and summary_item['month_index'] == selected_month %}
+        <li><a href="{{url_for('view_journal', username=journal_user.username, year=summary_item['year'], month=summary_item['month_index'])}}"
+               {{('class="selected"' if is_selected else None)|safe}}>{{summary_item['month_name']}}&nbsp;{{summary_item['year']}}&nbsp;({{summary_item['pagenames']|length}})</a></li>
         {% endfor %}
       </ul>
     </div>
 
     <div class="journal_new_entry_area">
       <button value="post" onclick="document.getElementById('new_entry_form').style.display='block'; document.getElementById('new_entry_button').style.display='none';" id="new_entry_button">Post a new journal entry</button>
-      <form id="new_entry_form" style="display: none;" method="post" accept-charset="utf-8" class="post_journal_entry">
+      <form action="{{url_for('post_journal_entry')}}" id="new_entry_form"
+            style="display: none;" method="post" accept-charset="utf-8" class="post_journal_entry">
 	<textarea name="entry_content" rows="8" cols="80"></textarea>
         <div class="post_journal_entry_controls">
           <div class="post_journal_entry_controls_row">
             <button type="submit" name="action" value="save_with_system_time">Post using current server time</button>
           </div>
           <div class="post_journal_entry_controls_row">
-	    <button type="submit" name="action" value="save" accesskey="s">Post using custom timestamp:</button>
+	    <button type="submit" name="action" value="save_with_custom_time" accesskey="s">Post using custom timestamp:</button>
             <input type="text" name="entry_timestamp" value="{{current_timestamp_string}}"></input>
           </div>
           <div class="post_journal_entry_controls_row">

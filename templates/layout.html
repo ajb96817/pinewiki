@@ -39,7 +39,7 @@
 	  <a accesskey="p" href="{{url_for('view_page', pagename='start')}}"{{(' class="current"' if toolbar_selection == 'start' else '')|safe}}>Start</a> -
 	  <a accesskey="t" href="{{url_for('view_page', pagename='chat')}}"{{(' class="current"' if toolbar_selection == 'chat' else '')|safe}}>Chat</a> -
 	  <a accesskey="c" href="{{url_for('todays_calendar')}}"{{(' class="current"' if toolbar_selection == 'calendar' else '')|safe}}>Calendar</a> -
-          <a accesskey="j" href="{{url_for('view_journal')}}"{{(' class="current"' if toolbar_selection == 'journal' else '')|safe}}>Journal</a> -
+          <a accesskey="j" href="{{url_for('view_current_user_journal')}}"{{(' class="current"' if toolbar_selection == 'journal' else '')|safe}}>Journal</a> -
 	  <a accesskey="f" href="{{url_for('view_directory', path='')}}"{{(' class="current"' if toolbar_selection == 'files' else '')|safe}}>Files</a> -
 	  <a accesskey="r" href="{{url_for('recent_changes')}}"{{(' class="current"' if toolbar_selection == 'recent_changes' else '')|safe}}>Recent&nbsp;Changes</a> -
 	  <a accesskey="m" href="{{url_for('view_sitemap')}}"{{(' class="current"' if toolbar_selection == 'sitemap' else '')|safe}}>Sitemap</a>
