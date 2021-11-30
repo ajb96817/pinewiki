@@ -335,7 +335,7 @@ class Page:
     def has_encryption(self):
         return '<ENCRYPTED' in self.content
                        
-    def is_empty(self ):
+    def is_empty(self):
         return self.content.strip() == ''
 
     def journal_page_info(self):
@@ -365,7 +365,8 @@ class Page:
     def content_as_markdown(self, newlines_to_breaks=False):
         pagenames_set = g.database.fetch_all_pagenames_set()
         return self.content_as_markdown_with_pagenames_set(
-            pagenames_set, newlines_to_breaks=newlines_to_breaks)
+            pagenames_set,
+            newlines_to_breaks=newlines_to_breaks)
 
     def content_as_markdown_with_pagenames_set(self, pagenames_set, newlines_to_breaks=False):
         wikilink_extension = WikiLinkExtension()
@@ -632,7 +633,7 @@ class ChatroomHelper:
         
     def post_new_chat(self, content, user_id):
         # generate unique pagename
-        pagename = 'chat:{}'.format(str(time.time()).replace('.', '_'))
+        pagename = 'chat:{:.7f}'.format(str(time.time()).replace('.', '_'))
         page = Page(pagename, content)
         page.last_modified_by_user_id = user_id
         g.database.update_page(page)
