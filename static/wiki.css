@@ -111,9 +111,7 @@ div.pagination {
     padding: 0.5em 2em;
 }
 
-form.edit_page textarea, form.post_chat textarea {
-    width: 98%;
-    height: 500px;
+form.edit_page textarea, form.post_chat textarea, form.post_journal_entry textarea {
     border: 1px solid #aaa;
     background-color: #f8f8f8;
     padding: 0.2em 0.5em;
@@ -122,6 +120,11 @@ form.edit_page textarea, form.post_chat textarea {
     font-size: 110%;
     box-shadow: 0 0 0.3em #aaa inset;
 }
+form.edit_page textarea, form.post_chat textarea {
+    width: 98%;
+    height: 500px;
+}
+
 form.edit_page div.journal_page_info {
     margin-bottom: 0.5em;
 }
@@ -290,10 +293,11 @@ div.journal_navigation a.selected { font-weight: bold; }
 div.journal_new_entry_area {
     margin-bottom: 1em;
 }
+div.journal_new_entry_area button { font-size: 110%; }
+div.journal_new_entry_area input { font-size: 110%; font-family: monospace; width: 20em; }
+
 div.post_journal_entry_controls_row {
     margin: 0.2em 0;
-}
-div.journal_entry {
 }
 div.journal_entry .journal_timestamp {
     font-weight: bold;
