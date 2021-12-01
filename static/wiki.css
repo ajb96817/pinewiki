@@ -279,6 +279,8 @@ div.journal_navigation {
     float: right;
     width: 16em;
     padding: 0.25em 0.5em;
+    margin-left: 1em;
+    margin-bottom: 0.5em;
     height: 100%;
     border: 2px solid #ddd;
     background-color: #eee;

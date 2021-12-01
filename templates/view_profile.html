@@ -40,8 +40,8 @@
 	      {% endfor %}
 	    </select>
 	    <p>
-	      <a href="#" onclick="Notification.requestPermission()">Authorize notifications</a> -
-	      <a href="#" onclick="new Notification('This is a test')">Test notifications</a>
+	      <a href="#" onclick="Notification.requestPermission();return false;">Authorize notifications</a> -
+	      <a href="#" onclick="new Notification('This is a test');return false;">Test notifications</a>
 	    </p>
 	  </td>
 	</tr>

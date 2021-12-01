@@ -747,13 +747,18 @@ class JournalHelper:
 
         return summary_items
 
-    def formatted_time_from_journal_pagename(self, pagename):
+    def formatted_time_from_journal_pagename(self, pagename, include_weekday=False):
         parsed = JournalHelper.parse_journal_pagename(pagename)
         hour = (parsed['hour']-1)%12 + 1
         ampm = 'pm' if parsed['hour'] >= 12 else 'am'
-        return '''{:02d}-{}-{:04d} at {}:{:02d}{}'''.format(
+        result = '''{:02d}-{}-{:04d} at {}:{:02d}{}'''.format(
             parsed['day'], parsed['month_abbr'].capitalize(), parsed['year'],
             hour, parsed['minute'], ampm)
+        if include_weekday:
+            weekday = calendar.weekday(parsed['year'], parsed['month_index'], parsed['day'])
+            weekday_abbr = calendar.day_abbr[weekday]
+            result = '{} {}'.format(weekday_abbr, result)
+        return result
 
     # Returns created/updated Page object
     def post_journal_entry(self, content, user, timestamp):
