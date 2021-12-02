@@ -194,6 +194,8 @@ class Event:
     def formatted_description(self):
         if self.event_type in ['create_page', 'edit_page', 'delete_page']:
             return self._formatted_page_event_description()
+        elif self.event_type in ['rename_page']:
+            return self._formatted_page_rename_event_description()
         elif self.event_type in ['create_file', 'delete_file', 'move_file']:
             return self._formatted_file_event_description()
         elif self.event_type in ['create_folder', 'delete_folder']:
@@ -212,6 +214,14 @@ class Event:
             url_for('view_page', pagename=self.event_target),
             self.event_target,
             action,
+            self.username)
+
+    def _formatted_page_rename_event_description(self):
+        return '<strong><a href="{}">{}</a></strong> renamed to <strong><a href="{}">{}</a></strong> by <strong>{}</strong>'.format(
+            url_for('view_page', pagename=self.event_target),
+            self.event_target,
+            url_for('view_page', pagename=self.event_target_2),
+            self.event_target_2,
             self.username)
 
     def _formatted_file_event_description(self):
@@ -633,7 +643,7 @@ class ChatroomHelper:
         
     def post_new_chat(self, content, user_id):
         # generate unique pagename
-        pagename = 'chat:{:.7f}'.format(str(time.time()).replace('.', '_'))
+        pagename = 'chat:{}'.format(str(time.time()).replace('.', '_'))
         page = Page(pagename, content)
         page.last_modified_by_user_id = user_id
         g.database.update_page(page)
@@ -1006,6 +1016,9 @@ class Database:
                 self.db.execute(
                     '''insert into page_fts (name, content) values (?, ?)''', (page.name, page.content))
 
+    def rename_page(self, page, new_pagename):
+        pass
+
     def fulltext_search(self, query, limit=20, offset=0):
         results = []
         for row in self.db.execute(
@@ -1138,7 +1151,7 @@ from event order by timestamp desc limit ?,?''', (skip, limit)):
         events = []
         for row in self.db.execute('''
 select id, event_type, event_target, event_target_2, bytes_changed, user_id, timestamp
-from event where event_target = ? and event_type in ('create_page','edit_page','delete_page')
+from event where event_target = ? and event_type in ('create_page','edit_page','delete_page','rename_page')
 order by timestamp desc limit ?,?''', (pagename, skip, limit)):
             event = Event()
             event.id = row[0]
