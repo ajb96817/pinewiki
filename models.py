@@ -916,7 +916,7 @@ class Database:
     def fetch_user_by_id(self, user_id):
         row = self.db.execute('''select username, profile from user where id = ?''', (user_id,)).fetchone()
         if row:
-            u = User(user_id, row[0])
+            u = User(int(user_id), row[0])
             u.set_profile_json(row[1])
             return u
         else:
