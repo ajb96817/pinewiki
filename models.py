@@ -946,7 +946,7 @@ class Database:
         password_sha1 = self.hash_password(password)
         row = self.db.execute('''select id, username, password_sha1, profile from user where username = ?''', (username,)).fetchone()
         if row and row[2] == password_sha1:
-            u = User(row[0], row[1])
+            u = User(int(row[0]), row[1])
             u.set_profile_json(row[3])
             return u
         else:
