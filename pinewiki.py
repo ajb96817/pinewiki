@@ -299,6 +299,7 @@ def view_journal(username, year, month):
     all_users = g.database.fetch_all_users()  # for user dropdown selector
     journal_user = g.database.fetch_user_by_username(username)
     is_own_journal = journal_user.user_id == current_user.user_id
+    is_own_journal = True
     entry_summary = helper.build_entry_summary(journal_user)
     if year == 0:
         year = now_local.year
