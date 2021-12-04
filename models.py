@@ -698,12 +698,15 @@ class JournalHelper:
         formatted_dt = dt.strftime('%d_%b_%Y:%I_%M%p').lower()
         return 'journal:{}:{}'.format(username, formatted_dt)
 
-    # Build journal entry summary for the given user.
+    # Build journal entry summary for the given user and retrieve a paginated list of
+    # pagenames starting at the given year/month (up to max_entries).
     # Entries are sorted by descending timestamp (newest first).
     # NOTE: load_all_pagenames_set() must have been called first before using this.
-    # Returns a list of dictionaries of the form:
-    #   { 'year': 2021, 'month': 10, 'pagenames': [...] }
-    def build_entry_summary(self, user):
+    # Returns a tuple of:
+    #   List of dictionaries of the form:
+    #     { 'year': 2021, 'month': 10, 'pagenames': [...] }
+    #   List of page names starting a the given year/month.
+    def build_entry_summary(self, user, page_year, page_month, max_entries):
         # Build map of pagename->parsed_info
         pagename_to_parsed_map = dict()
         # Keep track of year+month date range as pages are scanned
@@ -751,11 +754,18 @@ class JournalHelper:
             key=sortkey, reverse=True)
 
         # Populate all the pagenames into summary_items.
+        # TODO: May want to remove this if it's not used.
         for pagename, parsed in sorted_journal_items:
             summary_item = ym_to_item_map[(parsed['year'], parsed['month_index'])]
             summary_item['pagenames'].append(pagename)
 
-        return summary_items
+        paginated_pagenames = []
+        for index, (pagename, parsed) in enumerate(sorted_journal_items):
+            if parsed['year'] == page_year and parsed['month_index'] == page_month:
+                paginated_pagenames = list(map(lambda i: i[0], sorted_journal_items[index:index+max_entries]))
+                break
+
+        return summary_items, paginated_pagenames
 
     def formatted_time_from_journal_pagename(self, pagename, include_weekday=False):
         parsed = JournalHelper.parse_journal_pagename(pagename)
@@ -769,6 +779,10 @@ class JournalHelper:
             weekday_abbr = calendar.day_abbr[weekday]
             result = '{} {}'.format(weekday_abbr, result)
         return result
+
+    def year_and_month_index_from_journal_pagename(self, pagename):
+        parsed = JournalHelper.parse_journal_pagename(pagename)
+        return parsed['year'], parsed['month_index']
 
     # Returns created/updated Page object
     def post_journal_entry(self, content, user, timestamp):

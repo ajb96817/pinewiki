@@ -1,6 +1,7 @@
 
 import datetime
 import dateutil.tz
+import calendar
 import re
 from flask import g, Flask, render_template, request, redirect, url_for, flash, send_file, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
@@ -299,19 +300,19 @@ def view_journal(username, year, month):
     all_users = g.database.fetch_all_users()  # for user dropdown selector
     journal_user = g.database.fetch_user_by_username(username)
     is_own_journal = journal_user.user_id == current_user.user_id
-    entry_summary = helper.build_entry_summary(journal_user)
     if year == 0:
         year = now_local.year
     if month == 0:
         month = now_local.month
-    current_summary_item = None
-    for item in entry_summary:
-        if item['year'] == year and item['month_index'] == month:
-            current_summary_item = item
-    if current_summary_item:
-        pagenames = current_summary_item['pagenames']
-    else:
-        pagenames = []
+    entry_summary, pagenames = helper.build_entry_summary(journal_user, year, month, 50)
+    # current_summary_item = None
+    # for item in entry_summary:
+    #     if item['year'] == year and item['month_index'] == month:
+    #         current_summary_item = item
+    # if current_summary_item:
+    #     pagenames = current_summary_item['pagenames']
+    # else:
+    #     pagenames = []
     journal_pages = g.database.fetch_pages(pagenames)
     current_timestamp_string = now_local.strftime('%d-%b-%Y at %-I:%M') + now_local.strftime('%p').lower()
     return render_template(
@@ -327,7 +328,8 @@ def view_journal(username, year, month):
         is_own_journal=is_own_journal,
         current_timestamp_string=current_timestamp_string,
         selected_year=year,
-        selected_month=month)
+        selected_month=month,
+        calendar=calendar)
 
 @app.route('/journal', methods=['POST'])
 @login_required

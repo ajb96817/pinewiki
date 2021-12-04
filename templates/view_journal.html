@@ -58,8 +58,15 @@
     {% endif %}
 
     <div class="journal_entries_container">
+    {% set header_ns = namespace(year=None, month=None) %}
     {% for page in journal_pages %}
     <div class="journal_entry">
+      {% set page_year_month = helper.year_and_month_index_from_journal_pagename(page.name) %}
+      {% if page_year_month[0] != header_ns.year or page_year_month[1] != header_ns.month %}
+      {% set header_ns.year = page_year_month[0] %}
+      {% set header_ns.month = page_year_month[1] %}
+      <div class="journal_month_year_header">{{calendar.month_name[header_ns.month]}} {{header_ns.year}}</div>
+      {% endif %}
       <div class="journal_timestamp">
         <a href="{{url_for('edit_page', pagename=page.name)}}">{{helper.formatted_time_from_journal_pagename(page.name, True)}}</a>
       </div>

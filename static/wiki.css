@@ -287,6 +287,7 @@ div.journal_navigation {
     height: 100%;
     border: 2px solid #ddd;
     background-color: #eee;
+    box-shadow: 0 0 0.4em #ccc;
 }
 div.journal_navigation div.current_journal_user { margin-bottom: 0.25em; }
 div.journal_navigation a.selected { font-weight: bold; }
@@ -308,6 +309,11 @@ div.journal_entry .journal_timestamp {
 }
 div.journal_entry div.journal_entry_content {
     clear: left;
+}
+div.journal_entry div.journal_month_year_header {
+    font-size: 150%;
+    font-weight: bold;
+    margin-bottom: 0.25em;
 }
 
 
