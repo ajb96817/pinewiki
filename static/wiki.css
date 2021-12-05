@@ -34,12 +34,13 @@ div.notice { color: #090; font-weight: bold; }
 div.error { color: #900; font-weight: bold; }
 
 form.login fieldset { width: auto; float: left; }
-#tools { float: right; text-align: right; }
+#tools { text-align: right; }
 #tools div.toolbar { margin: 0.3em 0; }
 #tools div.toolbar a.current { font-weight: bold; }
-div.breadcrumbs { padding-top: 1em; font-size: 110%; }
+#tools form.search_form input { font-size: 110%; font-family: monospace; }
+#tools form.search_form button { font-size: 110%; }
+div.breadcrumbs { font-size: 110%; }
 
-div.page_wrapper { clear: both; }
 div.pagename { padding-left: 2em; font-size: 110%; }
 div.pagename span.pagename {
     font-weight: bold;
@@ -101,6 +102,7 @@ div.page_content blockquote {
     background-color: #fee;
 }
 
+div.page_wrapper { margin-top: 1em; }
 div.page_wrapper div.preview h2 {
     border: none;
     border-bottom: 4px dotted #ccc;
@@ -133,6 +135,7 @@ form.post_chat textarea { height: 150px; }
 div.chat_new_post_area {
     margin-bottom: 1em;
 }
+div.chat_new_post_area button { font-size: 110%; }
 div.chat_date_separator {
     font-weight: bold;
     font-size: 120%;
@@ -313,10 +316,9 @@ div.journal_entry div.journal_entry_content {
 div.journal_entry div.journal_month_year_header {
     font-size: 150%;
     font-weight: bold;
-    margin-bottom: 0.25em;
+    margin-bottom: 0.5em;
+    margin-top: 1em;
 }
-
-
 
 
 div.sitemap { padding: 1em 2em; }
