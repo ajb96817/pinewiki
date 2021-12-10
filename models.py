@@ -678,6 +678,7 @@ class JournalHelper:
         if match is None:
             return None
         month_abbr = match.group('month_abbr')
+        hour = int(match.group('hour')) % 12
         ampm_offset = 0 if match.group('ampm') == 'am' else 12
         month_index = self.MONTH_ABBR_MAP[month_abbr]
         username = match.group('username')
@@ -689,7 +690,7 @@ class JournalHelper:
             'month_abbr': month_abbr,
             'month_index': month_index,
             'day': int(match.group('day')),
-            'hour': int(match.group('hour')) + ampm_offset,
+            'hour': hour + ampm_offset,
             'minute': int(match.group('minute'))
         }
 

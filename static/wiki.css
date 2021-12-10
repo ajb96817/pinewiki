@@ -6,7 +6,7 @@ body {
     background-color: #eee;
     font-family: monospace;
     font-size: 15px;
-    overflow-y: scroll;  /* always show scrollbar to keep UI form jumping around slightly from page to page */
+    overflow-y: scroll;  /* always show scrollbar to keep UI from jumping around slightly from page to page */
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -55,9 +55,7 @@ div.pagename span.pagename {
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
 }
-div.page_content {
-    padding: 1em 2em;
-}
+div.page_content { padding: 1em 2em; }
 div.page_content div.commands {
     float: right;
     padding-bottom: 0.3em;
@@ -109,9 +107,7 @@ div.page_wrapper div.preview h2 {
     margin-top: 1em;
 }
 
-div.pagination {
-    padding: 0.5em 2em;
-}
+div.pagination { padding: 0.5em 2em; }
 
 form.edit_page textarea, form.post_chat textarea, form.post_journal_entry textarea {
     border: 1px solid #aaa;
@@ -127,14 +123,10 @@ form.edit_page textarea, form.post_chat textarea {
     height: 500px;
 }
 
-form.edit_page div.journal_page_info {
-    margin-bottom: 0.5em;
-}
+form.edit_page div.journal_page_info { margin-bottom: 0.5em; }
 form.post_chat textarea { height: 150px; }
 
-div.chat_new_post_area {
-    margin-bottom: 1em;
-}
+div.chat_new_post_area {  margin-bottom: 1em; }
 div.chat_new_post_area button { font-size: 110%; }
 div.chat_date_separator {
     font-weight: bold;
@@ -294,15 +286,10 @@ div.journal_navigation {
 }
 div.journal_navigation div.current_journal_user { margin-bottom: 0.25em; }
 div.journal_navigation a.selected { font-weight: bold; }
-div.journal_new_entry_area {
-    margin-bottom: 1em;
-}
+div.journal_new_entry_area { margin-bottom: 1em; }
 div.journal_new_entry_area button { font-size: 110%; }
 div.journal_new_entry_area input { font-size: 110%; font-family: monospace; width: 20em; }
-
-div.post_journal_entry_controls_row {
-    margin: 0.2em 0;
-}
+div.post_journal_entry_controls_row { margin: 0.2em 0; }
 div.journal_entry .journal_timestamp {
     font-weight: bold;
     border-bottom: 2px solid #ddd;
@@ -310,9 +297,7 @@ div.journal_entry .journal_timestamp {
     float: left;
     margin-bottom: 0.2em;
 }
-div.journal_entry div.journal_entry_content {
-    clear: left;
-}
+div.journal_entry div.journal_entry_content { clear: left; }
 div.journal_entry div.journal_month_year_header {
     font-size: 150%;
     font-weight: bold;
