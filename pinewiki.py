@@ -211,7 +211,7 @@ def view_chat():
     else:
         is_main_chat_view = True
         limit_in_seconds = 2*24*60*60
-        limit = 50
+        limit = 100
     chat_pages = g.database.fetch_chat_pages(limit=limit, limit_in_seconds=limit_in_seconds)
     return render_template(
         'view_chat.html',
@@ -227,7 +227,7 @@ def view_chat():
 def fetch_latest_chats():
     helper = ChatroomHelper()
     limit_in_seconds = 2*24*60*60
-    chat_pages = g.database.fetch_chat_pages(limit=500, limit_in_seconds=limit_in_seconds)
+    chat_pages = g.database.fetch_chat_pages(limit=100, limit_in_seconds=limit_in_seconds)
     return render_template(
         '_chat_messages.html',
         chat_pages=chat_pages,
