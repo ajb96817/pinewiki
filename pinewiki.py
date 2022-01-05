@@ -207,10 +207,12 @@ def view_chat():
     if request.args.get('older') == '1':
         is_main_chat_view = False
         limit_in_seconds = 7*24*60*60
+        limit = 500
     else:
         is_main_chat_view = True
         limit_in_seconds = 2*24*60*60
-    chat_pages = g.database.fetch_chat_pages(limit=500, limit_in_seconds=limit_in_seconds)
+        limit = 50
+    chat_pages = g.database.fetch_chat_pages(limit=limit, limit_in_seconds=limit_in_seconds)
     return render_template(
         'view_chat.html',
         toolbar_selection='chat',
@@ -305,14 +307,6 @@ def view_journal(username, year, month):
     if month == 0:
         month = now_local.month
     entry_summary, pagenames = helper.build_entry_summary(journal_user, year, month, 50)
-    # current_summary_item = None
-    # for item in entry_summary:
-    #     if item['year'] == year and item['month_index'] == month:
-    #         current_summary_item = item
-    # if current_summary_item:
-    #     pagenames = current_summary_item['pagenames']
-    # else:
-    #     pagenames = []
     journal_pages = g.database.fetch_pages(pagenames)
     current_timestamp_string = now_local.strftime('%d-%b-%Y at %-I:%M') + now_local.strftime('%p').lower()
     return render_template(
