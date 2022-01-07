@@ -32,7 +32,7 @@
 	  </td>
 	</tr>
 	<tr>
-	  <td class="key">Notifications:</td>
+	  <td class="key">Desktop Notifications:</td>
 	  <td class="value">
 	    <select name="notification_preference">
 	      {% for (value, description) in current_user.NOTIFICATION_OPTIONS %}
@@ -43,6 +43,74 @@
 	      <a href="#" onclick="Notification.requestPermission();return false;">Authorize notifications</a> -
 	      <a href="#" onclick="new Notification('This is a test');return false;">Test notifications</a>
 	    </p>
+	  </td>
+	</tr>
+	<tr>
+	  <td class="key">Email Notifications:</td>
+	  <td class="value">
+	    <select name="email_notification_preference">
+	      {% for (value, description) in current_user.NOTIFICATION_OPTIONS %}
+	      <option value="{{value}}"{{' selected' if current_user.profile['notifications'] == value else ''}}>{{description}}</option>
+	      {% endfor %}
+	    </select>
+	  </td>
+	</tr>
+	<tr>
+	  <td class="key">Recipients:</td>
+	  <td class="value">
+	    <textarea name="email_recipients" rows="3" cols="40"></textarea>
+	    <br />
+	    (one per line)
+	  </td>
+	</tr>
+	<tr>
+	  <td class="key">Email throttle:</td>
+	  <td class="value">
+	    <input type="checkbox" name="email_throttle" value="1" />
+	    Send a maximum of one email every
+	    <input type="text" name="email_throttle_minutes" size="2" value="5" />
+	    minutes
+	    <p>
+	      <a href="#" onclick="document.getElementById('smtp_settings').style.display='table-row';return false;">Edit SMTP settings</a> -
+	      <a href="#" onclick="return false;">Disarm throttling</a> -
+	      <a href="#" onclick="return false;">Send test email</a>
+	    </p>
+	  </td>
+	</tr>
+	<tr id="smtp_settings" style="display: none;">
+	  <td class="key"></td>
+	  <td class="value">
+	    <table class="edit_profile"><tbody>
+		<tr>
+		  <td class="key">SMTP hostname:</td>
+		  <td class="value"><input name="mail_server" type="text" value="" size="30" /></td>
+		</tr>
+		<tr>
+		  <td class="key">Port:</td>
+		  <td class="value"><input name="mail_port" type="text" value="25" size="5" /></td>
+		</tr>
+		<tr>
+		  <td class="key">Encryption:</td>
+		  <td class="value">
+		    <input type="checkbox" name="mail_use_tls" value="1">
+		    <label for="mail_use_tls">Use TLS</label>
+		    <input type="checkbox" name="mail_use_ssl" value="1">
+		    <label for="mail_use_ssl">Use SSL</label>
+		  </td>
+		</tr>
+		<tr>
+		  <td class="key">Username:</td>
+		  <td class="value"><input name="mail_username" type="text" value="" size="30" /></td>
+		</tr>
+		<tr>
+		  <td class="key">Password:</td>
+		  <td class="value"><input name="mail_password" type="password" value="" size="30" /></td>
+		</tr>
+		<tr>
+		  <td class="key">Default sender:<br />(your own email)</td>
+		  <td class="value"><input name="mail_default_sender" type="text" value="" size="30" /></td>
+		</tr>
+	    </tbody></table>
 	  </td>
 	</tr>
 	<tr>
