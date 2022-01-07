@@ -5,6 +5,7 @@ import calendar
 import re
 from flask import g, Flask, render_template, request, redirect, url_for, flash, send_file, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from flask_mail import Mail
 from models import Database, Page, User, CalendarHelper, ChatroomHelper, JournalHelper, FileHelper
 
 
@@ -14,6 +15,8 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 app.config['SECRET_KEY'] = 'ueahrucahrou'
 app.config['MAX_CONTENT_LENGTH'] = 100*1024*1024  # max uploaded file size
+
+mail = Mail()
 
 
 def current_local_timestamp():
@@ -30,6 +33,7 @@ def load_user(user_id):
 def before_request():
     g.database = Database()
     g.database.connect()
+    g.mail = mail
 
 @app.teardown_request
 def teardown_request(exception):
@@ -519,7 +523,7 @@ def fulltext_search():
 @login_required
 def get_latest_notifications_json():
     cutoff_timestamp = request.args.get('cutoff')
-    user_id = 123 # current_user.user_id
+    user_id = current_user.user_id
     notifications = g.database.fetch_notifications(user_id, cutoff_timestamp=cutoff_timestamp)
     return jsonify(notifications)
 

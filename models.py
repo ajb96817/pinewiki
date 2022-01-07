@@ -10,6 +10,7 @@ import datetime
 import dateutil.tz
 import dateutil.parser
 from flask_login import UserMixin
+from flask_mail import Message
 import flask
 from flask import url_for, g
 import werkzeug.utils
@@ -296,6 +297,59 @@ class Event:
             return 'byteschanged byteschanged_negative'
         else:
             return 'byteschanged byteschanged_positive'
+
+
+# notification_type: 'chat', 'journal', 'page', 'file', etc.  This is the notification that is being created.
+# notification_type_preference: one of User.NOTIFICATION_OPTIONS.  This is the user's selected preference.
+def is_notification_type_compatible(notification_type, notification_type_preference):
+    if notification_type_preference == 'off':
+        return False
+    elif notification_type_preference == 'any':
+        return True
+    elif notification_type_preference == 'chat':
+        return notification_type == 'chat'
+    elif notification_type_preference == 'page':
+        return notification_type != 'chat'
+    else:
+        return False
+
+
+def send_email_notificiations(notification_type, message, user_id):
+    all_users = g.database.fetch_all_users()
+    for user in all_users:
+        notification_pref = user.profile.get('email_notifications', 'off')
+        if user.user_id != user_id and is_notification_type_compatible(notification_type, notification_pref):
+            # Check throttle timeout
+            throttle_enabled = user.profile.get('email_throttle_enabled', False)
+            last_sent_timestamp = user.profile.get('email_last_sent_timestamp', None)
+            throttle_minutes = user.profile.get('email_throttle_minutes', 0)
+            if not throttle_enabled or last_sent_timestamp is None or time.time() - last_sent_timestamp >= 60.0*throttle_minutes:
+                really_send_email_notification(user, notification_type, message)
+                # update last-sent timestamp to implement rate throttling
+                user.profile['email_last_sent_timestamp'] = time.time()
+                g.database.save_user_changes(user)
+
+# Send an email notification, unconditionally.
+def really_send_email_notification(user, notification_type, message):
+    profile = user.profile
+    app = flask.current_app
+    app.config['MAIL_SERVER'] = profile.get('smtp_hostname', '')
+    app.config['MAIL_PORT'] = profile.get('smtp_port', 25)
+    app.config['MAIL_USE_TLS'] = profile.get('smtp_use_tls', False)
+    app.config['MAIL_USE_SSL'] = profile.get('smtp_use_ssl', False)
+    app.config['MAIL_USERNAME'] = profile.get('smtp_username', '')
+    app.config['MAIL_PASSWORD'] = profile.get('smtp_password', '')
+    app.config['MAIL_DEFAULT_SENDER'] = profile.get('smtp_default_sender', '')
+    g.mail.init_app(app)
+    recipients = [line.strip() for line in profile.get('email_recipients', '').splitlines() if '@' in line]
+    subject = 'pinewiki: {} notification'.format(notification_type)
+    msg = Message(subject, recipients=recipients)
+    msg.body = message
+    try:
+        g.mail.send(msg)
+    except:
+        pass
+    g.mail.send(msg)
 
 
 class CalendarHelper(calendar.Calendar):
@@ -1067,6 +1121,7 @@ class Database:
             (notification_type, message, user_id))
         # prune old notifications
         self.db.execute('''delete from notification where timestamp < datetime('now', '-1 month')''')
+        send_email_notificiations(notification_type, message, user_id)
 
     def create_page_edit_notification(self, page, user):
         pagename = page.name
