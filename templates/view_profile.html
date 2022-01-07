@@ -27,7 +27,7 @@
 	    <select name="chat_color">
 	      {% for colorname in chatroom_helper.COLORNAMES %}
 	      {% set colorvalue = chatroom_helper.COLORS[loop.index0] %}
-	      <option value="{{colorvalue}}"{{' selected' if current_user.profile['chat_color'] == colorvalue else ''}}>{{colorname|capitalize}}</option>
+	      <option value="{{colorvalue}}"{{' selected' if profile.get('chat_color') == colorvalue else ''}}>{{colorname|capitalize}}</option>
 	      {% endfor %}
 	  </td>
 	</tr>
@@ -36,7 +36,7 @@
 	  <td class="value">
 	    <select name="notification_preference">
 	      {% for (value, description) in current_user.NOTIFICATION_OPTIONS %}
-	      <option value="{{value}}"{{' selected' if current_user.profile['notifications'] == value else ''}}>{{description}}</option>
+	      <option value="{{value}}"{{' selected' if profile.get('notifications') == value else ''}}>{{description}}</option>
 	      {% endfor %}
 	    </select>
 	    <p>
@@ -50,7 +50,7 @@
 	  <td class="value">
 	    <select name="email_notification_preference">
 	      {% for (value, description) in current_user.NOTIFICATION_OPTIONS %}
-	      <option value="{{value}}"{{' selected' if current_user.profile['notifications'] == value else ''}}>{{description}}</option>
+	      <option value="{{value}}"{{' selected' if profile.get('email_notifications') == value else ''}}>{{description}}</option>
 	      {% endfor %}
 	    </select>
 	  </td>
@@ -58,7 +58,7 @@
 	<tr>
 	  <td class="key">Recipients:</td>
 	  <td class="value">
-	    <textarea name="email_recipients" rows="3" cols="40"></textarea>
+	    <textarea name="email_recipients" rows="3" cols="40">{{profile.get('email_recipients', '')}}</textarea>
 	    <br />
 	    (one per line)
 	  </td>
@@ -66,9 +66,9 @@
 	<tr>
 	  <td class="key">Email throttle:</td>
 	  <td class="value">
-	    <input type="checkbox" name="email_throttle" value="1" />
+	    <input type="checkbox" name="email_throttle_enabled" value="1"{{' checked' if profile.get('email_throttle_enabled', False) else ''}} />
 	    Send a maximum of one email every
-	    <input type="text" name="email_throttle_minutes" size="2" value="5" />
+	    <input type="text" name="email_throttle_minutes" size="2" value="{{profile.get('email_throttle_minutes', 0)}}" />
 	    minutes
 	    <p>
 	      <a href="#" onclick="document.getElementById('smtp_settings').style.display='table-row';return false;">Edit SMTP settings</a> -
@@ -83,32 +83,32 @@
 	    <table class="edit_profile"><tbody>
 		<tr>
 		  <td class="key">SMTP hostname:</td>
-		  <td class="value"><input name="mail_server" type="text" value="" size="30" /></td>
+		  <td class="value"><input name="smtp_hostname" type="text" value="{{profile.get('smtp_hostname', '')}}" size="30" /></td>
 		</tr>
 		<tr>
 		  <td class="key">Port:</td>
-		  <td class="value"><input name="mail_port" type="text" value="25" size="5" /></td>
+		  <td class="value"><input name="smtp_port" type="text" value="{{profile.get('smtp_port', 25)}}" size="5" /></td>
 		</tr>
 		<tr>
 		  <td class="key">Encryption:</td>
 		  <td class="value">
-		    <input type="checkbox" name="mail_use_tls" value="1">
+		    <input type="checkbox" name="smtp_use_tls" value="1"{{' checked' if profile.get('smtp_use_tls', False) else ''}} />
 		    <label for="mail_use_tls">Use TLS</label>
-		    <input type="checkbox" name="mail_use_ssl" value="1">
+		    <input type="checkbox" name="smtp_use_ssl" value="1"{{' checked' if profile.get('smtp_use_ssl', False) else ''}} />
 		    <label for="mail_use_ssl">Use SSL</label>
 		  </td>
 		</tr>
 		<tr>
 		  <td class="key">Username:</td>
-		  <td class="value"><input name="mail_username" type="text" value="" size="30" /></td>
+		  <td class="value"><input name="smtp_username" type="text" value="{{profile.get('smtp_username', '')}}" size="30" /></td>
 		</tr>
 		<tr>
 		  <td class="key">Password:</td>
-		  <td class="value"><input name="mail_password" type="password" value="" size="30" /></td>
+		  <td class="value"><input name="smtp_password" type="password" value="{{profile.get('smtp_password', '')}}" size="30" /></td>
 		</tr>
 		<tr>
 		  <td class="key">Default sender:<br />(your own email)</td>
-		  <td class="value"><input name="mail_default_sender" type="text" value="" size="30" /></td>
+		  <td class="value"><input name="smtp_default_sender" type="text" value="{{profile.get('smtp_default_sender', '')}}" size="30" /></td>
 		</tr>
 	    </tbody></table>
 	  </td>

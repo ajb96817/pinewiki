@@ -530,14 +530,34 @@ def view_profile():
         'view_profile.html',
         toolbar_selection='profile',
         pagename='profile',
+        profile=current_user.profile,
         chatroom_helper=ChatroomHelper())
 
 @login_required
 @app.route('/profile', methods=['POST'])
 def update_profile():
-    # current_user.username = request.form['username'].strip()
-    current_user.profile['notifications'] = request.form['notification_preference']
-    current_user.profile['chat_color'] = request.form['chat_color']
+    profile = current_user.profile
+    profile['notifications'] = request.form['notification_preference']
+    profile['chat_color'] = request.form['chat_color']
+    profile['email_notifications'] = request.form['email_notification_preference']
+    profile['email_recipients'] = request.form['email_recipients']
+    profile['email_throttle_enabled'] = request.form.get('email_throttle_enabled', '0') == '1'
+    try:
+        throttle_minutes = int(request.form['email_throttle_minutes'])
+    except:
+        throttle_minutes = 0
+    profile['email_throttle_minutes'] = throttle_minutes
+    profile['smtp_hostname'] = request.form['smtp_hostname']
+    try:
+        smtp_port = int(request.form['smtp_port'])
+    except:
+        smtp_port = 25
+    profile['smtp_port'] = smtp_port
+    profile['smtp_use_tls'] = request.form.get('smtp_use_tls', '0') == '1'
+    profile['smtp_use_ssl'] = request.form.get('smtp_use_ssl', '0') == '1'
+    profile['smtp_username'] = request.form['smtp_username']
+    profile['smtp_password'] = request.form['smtp_password']
+    profile['smtp_default_sender'] = request.form['smtp_default_sender']
     g.database.save_user_changes(current_user)
     flash('Profile updated.', 'profile_notice')
     return redirect(url_for('view_profile'))

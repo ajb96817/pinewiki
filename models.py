@@ -177,9 +177,22 @@ class User(UserMixin):
 
     def set_profile_json(self, profile_json):
         if profile_json is None:
-            self.profile = self.default_profile()
+            self.profile = User.default_profile()
         else:
             self.profile = json.loads(profile_json)
+
+    @classmethod
+    def default_profile(cls):
+        return {
+            'chat_color': ChatroomHelper.COLORS[0],
+            'notifications': 'any',
+            'status': 'idle',
+            'status_message': '',
+            'email_notifications': 'off',
+            'email_throttle_enabled': False,
+            'email_throttle_minutes': 0,
+            'email_last_sent_timestamp': None
+        }        
 
     @classmethod
     def fetch_by_id(cls, user_id):
@@ -875,12 +888,7 @@ class Database:
         return h.hexdigest()
 
     def create_user(self, username, password):
-        profile = {
-            'chat_color': ChatroomHelper.COLORS[0],
-            'notifications': 'any',
-            'status': 'idle',
-            'status_message': ''
-        }
+        profile = User.default_profile()
         password_sha1 = self.hash_password(password)
         profile_json = json.dumps(profile)
         c = self.db.cursor()
