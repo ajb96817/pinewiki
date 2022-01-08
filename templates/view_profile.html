@@ -71,9 +71,11 @@
 	    <input type="text" name="email_throttle_minutes" size="2" value="{{profile.get('email_throttle_minutes', 0)}}" />
 	    minutes
 	    <p>
-	      <a href="#" onclick="return false;">Disarm throttling [3 mins left]</a> -
+	      {% if email_throttle_minutes_left > 0 %}
+	      <a href="{{url_for('disarm_email_throttle')}}">Disarm throttling [{{email_throttle_minutes_left}} minute(s) left]</a><br />
+	      {% endif %}
 	      <a href="#" onclick="document.getElementById('smtp_settings').style.display='table-row';return false;">Edit SMTP settings</a> -
-	      <a href="#" onclick="return false;">Send test email</a>
+	      <a href="{{url_for('send_test_email')}}">Send test email</a>
 	    </p>
 	  </td>
 	</tr>

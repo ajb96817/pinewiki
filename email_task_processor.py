@@ -1,5 +1,12 @@
 #!/bin/env python3
 
+# Email background task server, using a Redis job queue.
+# TODO: use_tls flag isn't implemented, only use_ssl
+
+REDIS_HOST = 'localhost'
+REDIS_PORT = 6379
+
+
 import json
 import redis
 import time
@@ -8,19 +15,14 @@ from smtplib import SMTP, SMTP_SSL
 from email.mime.text import MIMEText
 
 
-REDIS_HOST = 'localhost'
-REDIS_PORT = 6379
-
-
 def go():
     redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT)
     log('Starting server.')
     while True:
-        process_next_task(redis_client)
-        # try:
-        #     process_next_task(redis_client)
-        # except Exception as exc:
-        #     log('Error sending email: {}'.format(exc))
+        try:
+            process_next_task(redis_client)
+        except Exception as exc:
+            log('Error sending email: {}'.format(exc))
         
 def process_next_task(redis_client):
     _, task_json = redis_client.blpop('email_task_queue')

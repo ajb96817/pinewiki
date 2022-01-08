@@ -1,5 +1,6 @@
 
 
+import math
 import json
 import hashlib
 import sqlite3
@@ -182,6 +183,49 @@ class User(UserMixin):
         else:
             self.profile = json.loads(profile_json)
 
+    def email_throttle_minutes_left(self):
+        profile = self.profile
+        if profile.get('email_throttle_enabled', False):
+            last_sent_timestamp = profile.get('email_last_sent_timestamp', None)
+            if last_sent_timestamp is None: return 0
+            elapsed_seconds = time.time() - last_sent_timestamp
+            throttle_minutes = profile.get('email_throttle_minutes', 0)
+            return max(0, math.ceil(throttle_minutes - elapsed_seconds/60))
+        else:
+            return 0
+        
+    def disarm_email_throttle(self):
+        self.profile['email_last_sent_timestamp'] = None
+        g.database.save_user_changes(self)
+
+    # Send an email notification, unconditionally.
+    # This adds the email task to a Redis job queue.
+    def send_email_notification(self, notification_type, message):
+        profile = self.profile
+        app = flask.current_app
+        subject = 'pinewiki: {} notification'.format(notification_type)
+        recipients = [line.strip() for line in profile.get('email_recipients', '').splitlines() if '@' in line]
+        task = {
+            'smtp_hostname': profile.get('smtp_hostname', ''),
+            'smtp_port': profile.get('smtp_port', 25),
+            'use_tls': profile.get('smtp_use_tls', False),
+            'use_ssl': profile.get('smtp_use_ssl', False),
+            'username': profile.get('smtp_username', ''),
+            'password': profile.get('smtp_password', ''),
+            'subject': subject,
+            'sender': profile.get('smtp_default_sender', ''),
+            'recipients': recipients,
+            'body': message
+        }
+        task_json = json.dumps(task)
+        r = redis.Redis(host=app.config['REDIS_HOST'], port=app.config['REDIS_PORT'])
+        r.rpush('email_task_queue', task_json)
+        r.close()
+        # update last-sent timestamp to implement rate throttling
+        self.profile['email_last_sent_timestamp'] = time.time()
+        g.database.save_user_changes(self)
+    
+
     @classmethod
     def default_profile(cls):
         return {
@@ -324,35 +368,8 @@ def send_email_notificiations(notification_type, message, user_id):
             last_sent_timestamp = user.profile.get('email_last_sent_timestamp', None)
             throttle_minutes = user.profile.get('email_throttle_minutes', 0)
             if not throttle_enabled or last_sent_timestamp is None or time.time() - last_sent_timestamp >= 60.0*throttle_minutes:
-                really_send_email_notification(user, notification_type, message)
-                # update last-sent timestamp to implement rate throttling
-                user.profile['email_last_sent_timestamp'] = time.time()
-                g.database.save_user_changes(user)
+                user.send_email_notification(notification_type, message)
 
-# Send an email notification, unconditionally.
-# This adds the email task to a Redis job queue.
-def really_send_email_notification(user, notification_type, message):
-    profile = user.profile
-    app = flask.current_app
-    subject = 'pinewiki: {} notification'.format(notification_type)
-    recipients = [line.strip() for line in profile.get('email_recipients', '').splitlines() if '@' in line]
-    task = {
-        'smtp_hostname': profile.get('smtp_hostname', ''),
-        'smtp_port': profile.get('smtp_port', 25),
-        'use_tls': profile.get('smtp_use_tls', False),
-        'use_ssl': profile.get('smtp_use_ssl', False),
-        'username': profile.get('smtp_username', ''),
-        'password': profile.get('smtp_password', ''),
-        'subject': subject,
-        'sender': profile.get('smtp_default_sender', ''),
-        'recipients': recipients,
-        'body': message
-    }
-    task_json = json.dumps(task)
-    r = redis.Redis(host=app.config['REDIS_HOST'], port=app.config['REDIS_PORT'])
-    r.rpush('email_task_queue', task_json)
-    r.close()
-    
 
 class CalendarHelper(calendar.Calendar):
     def __init__(self, month, year):

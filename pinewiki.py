@@ -533,6 +533,7 @@ def view_profile():
         toolbar_selection='profile',
         pagename='profile',
         profile=current_user.profile,
+        email_throttle_minutes_left=current_user.email_throttle_minutes_left(),
         chatroom_helper=ChatroomHelper())
 
 @login_required
@@ -562,6 +563,21 @@ def update_profile():
     profile['smtp_default_sender'] = request.form['smtp_default_sender']
     g.database.save_user_changes(current_user)
     flash('Profile updated.', 'profile_notice')
+    return redirect(url_for('view_profile'))
+
+@login_required
+@app.route('/profile/disarm_email_throttle')
+def disarm_email_throttle():
+    current_user.disarm_email_throttle()
+    flash('Email notification throttling timer cleared.', 'profile_notice')
+    return redirect(url_for('view_profile'))
+
+@login_required
+@app.route('/profile/send_test_email')
+def send_test_email():
+    current_user.disarm_email_throttle()
+    current_user.send_email_notification('test', 'this is a test')
+    flash('Test email sent.', 'profile_notice')
     return redirect(url_for('view_profile'))
 
 @login_required
