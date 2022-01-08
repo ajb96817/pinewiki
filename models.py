@@ -344,6 +344,7 @@ def really_send_email_notification(user, notification_type, message):
         'username': profile.get('smtp_username', ''),
         'password': profile.get('smtp_password', ''),
         'subject': subject,
+        'sender': profile.get('smtp_default_sender', ''),
         'recipients': recipients,
         'body': message
     }
