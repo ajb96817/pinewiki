@@ -3,6 +3,7 @@
 import json
 import hashlib
 import sqlite3
+import redis
 import os
 import calendar
 import time
@@ -10,7 +11,6 @@ import datetime
 import dateutil.tz
 import dateutil.parser
 from flask_login import UserMixin
-from flask_mail import Message
 import flask
 from flask import url_for, g
 import werkzeug.utils
@@ -318,7 +318,7 @@ def send_email_notificiations(notification_type, message, user_id):
     all_users = g.database.fetch_all_users()
     for user in all_users:
         notification_pref = user.profile.get('email_notifications', 'off')
-        if user.user_id != user_id and is_notification_type_compatible(notification_type, notification_pref):
+        if (True or user.user_id != user_id) and is_notification_type_compatible(notification_type, notification_pref):
             # Check throttle timeout
             throttle_enabled = user.profile.get('email_throttle_enabled', False)
             last_sent_timestamp = user.profile.get('email_last_sent_timestamp', None)
@@ -330,27 +330,28 @@ def send_email_notificiations(notification_type, message, user_id):
                 g.database.save_user_changes(user)
 
 # Send an email notification, unconditionally.
+# This adds the email task to a Redis job queue.
 def really_send_email_notification(user, notification_type, message):
     profile = user.profile
     app = flask.current_app
-    app.config['MAIL_SERVER'] = profile.get('smtp_hostname', '')
-    app.config['MAIL_PORT'] = profile.get('smtp_port', 25)
-    app.config['MAIL_USE_TLS'] = profile.get('smtp_use_tls', False)
-    app.config['MAIL_USE_SSL'] = profile.get('smtp_use_ssl', False)
-    app.config['MAIL_USERNAME'] = profile.get('smtp_username', '')
-    app.config['MAIL_PASSWORD'] = profile.get('smtp_password', '')
-    app.config['MAIL_DEFAULT_SENDER'] = profile.get('smtp_default_sender', '')
-    g.mail.init_app(app)
-    recipients = [line.strip() for line in profile.get('email_recipients', '').splitlines() if '@' in line]
     subject = 'pinewiki: {} notification'.format(notification_type)
-    msg = Message(subject, recipients=recipients)
-    msg.body = message
-    try:
-        g.mail.send(msg)
-    except:
-        pass
-    g.mail.send(msg)
-
+    recipients = [line.strip() for line in profile.get('email_recipients', '').splitlines() if '@' in line]
+    task = {
+        'smtp_hostname': profile.get('smtp_hostname', ''),
+        'smtp_port': profile.get('smtp_port', 25),
+        'use_tls': profile.get('smtp_use_tls', False),
+        'use_ssl': profile.get('smtp_use_ssl', False),
+        'username': profile.get('smtp_username', ''),
+        'password': profile.get('smtp_password', ''),
+        'subject': subject,
+        'recipients': recipients,
+        'body': message
+    }
+    task_json = json.dumps(task)
+    r = redis.Redis(host=app.config['REDIS_HOST'], port=app.config['REDIS_PORT'])
+    r.rpush('email_task_queue', task_json)
+    r.close()
+    
 
 class CalendarHelper(calendar.Calendar):
     def __init__(self, month, year):
