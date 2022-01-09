@@ -362,7 +362,7 @@ def send_email_notificiations(notification_type, message, user_id):
     all_users = g.database.fetch_all_users()
     for user in all_users:
         notification_pref = user.profile.get('email_notifications', 'off')
-        if (True or user.user_id != user_id) and is_notification_type_compatible(notification_type, notification_pref):
+        if user.user_id != user_id and is_notification_type_compatible(notification_type, notification_pref):
             # Check throttle timeout
             throttle_enabled = user.profile.get('email_throttle_enabled', False)
             last_sent_timestamp = user.profile.get('email_last_sent_timestamp', None)

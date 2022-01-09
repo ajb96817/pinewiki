@@ -1,1 +1,1 @@
-Dependencies: pip3 install flask flask-login markdown python-dateutil Pygments
+Dependencies: pip3 install flask flask-login redis markdown python-dateutil Pygments
