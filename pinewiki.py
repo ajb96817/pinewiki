@@ -414,8 +414,7 @@ def download_file(filename):
     if full_path_for_file:
         return send_file(
             full_path_for_file,
-            as_attachment=attachment,
-            attachment_filename=filename)
+            as_attachment=attachment)
     else:
         return redirect(url_for('view_directory', path=path))
     
