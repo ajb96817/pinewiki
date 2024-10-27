@@ -535,8 +535,8 @@ def view_profile():
         email_throttle_minutes_left=current_user.email_throttle_minutes_left(),
         chatroom_helper=ChatroomHelper())
 
-@login_required
 @app.route('/profile', methods=['POST'])
+@login_required
 def update_profile():
     profile = current_user.profile
     profile['notifications'] = request.form['notification_preference']
@@ -564,23 +564,23 @@ def update_profile():
     flash('Profile updated.', 'profile_notice')
     return redirect(url_for('view_profile'))
 
-@login_required
 @app.route('/profile/disarm_email_throttle')
+@login_required
 def disarm_email_throttle():
     current_user.disarm_email_throttle()
     flash('Email notification throttling timer cleared.', 'profile_notice')
     return redirect(url_for('view_profile'))
 
-@login_required
 @app.route('/profile/send_test_email')
+@login_required
 def send_test_email():
     current_user.disarm_email_throttle()
     current_user.send_email_notification('test', 'this is a test')
     flash('Test email sent.', 'profile_notice')
     return redirect(url_for('view_profile'))
 
-@login_required
 @app.route('/update_password', methods=['POST'])
+@login_required
 def update_password():
     old_password = request.form['current_password']
     new_password = request.form['new_password']
@@ -593,8 +593,8 @@ def update_password():
         flash('Unable to update password.  Make sure you enter your old password correctly.', 'password_error')
     return redirect(url_for('view_profile'))
 
-@login_required
 @app.route('/admin', methods=['GET', 'POST'])
+@login_required
 def site_admin():
     all_users = g.database.fetch_all_users()
     return render_template(
@@ -602,22 +602,22 @@ def site_admin():
         pagename='admin',
         all_users=all_users)
 
-@login_required
 @app.route('/admin/create_user', methods=['POST'])
+@login_required
 def create_user():
     g.database.create_user(
         request.form['username'],
         request.form['password'])
     return redirect(url_for('site_admin'))
 
-@login_required
 @app.route('/admin/reset_password/<int:user_id>')
+@login_required
 def reset_password(user_id):
     g.database.reset_user_password(user_id)
     return redirect(url_for('site_admin'))
 
-@login_required
 @app.route('/admin/delete_user/<int:user_id>')
+@login_required
 def delete_user(user_id):
     if user_id != current_user.user_id:
         g.database.delete_user_id(user_id)
