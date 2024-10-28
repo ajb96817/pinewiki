@@ -6,6 +6,7 @@ import hashlib
 import sqlite3
 import redis
 import os
+import sys
 import calendar
 import time
 import datetime
@@ -224,7 +225,10 @@ class User(UserMixin):
         # update last-sent timestamp to implement rate throttling
         self.profile['email_last_sent_timestamp'] = time.time()
         g.database.save_user_changes(self)
-    
+
+    def perform_check_in(self):
+        self.profile['check_in_timestamp'] = time.time()
+        g.database.save_user_changes(self)
 
     @classmethod
     def default_profile(cls):
@@ -880,6 +884,45 @@ class JournalHelper:
         g.database.update_page(page)
         return page
 
+class CheckInHelper:
+    def breadcrumbs(self):
+        return [
+            ('start', 'start', False),
+            ('check_in', 'check_in', True)]
+
+    def load_check_in_info(self):
+        all_users = g.database.fetch_all_users()
+        return [self.check_in_info_for_user(user) for user in all_users]
+
+    def check_in_info_for_user(self, user):
+        check_in_timestamp = user.profile.get('check_in_timestamp')
+        time_ago_string = self.time_ago_string(check_in_timestamp, include_seconds=False)
+        return {
+            'username': user.username,
+            'time_ago_string': time_ago_string
+        }
+
+    def time_ago_string(self, timestamp, include_seconds=False):
+        if timestamp is None:
+            return 'never'
+        elapsed_seconds = int(time.time() - timestamp)
+        if elapsed_seconds <= 60:
+            return 'just now'
+        minutes, seconds = divmod(elapsed_seconds, 60)
+        hours, minutes = divmod(minutes, 60)
+        days, hours = divmod(hours, 24)
+        pieces = []
+        if days > 0:
+            pieces.append('{} day{}'.format(days, '' if days == 1 else 's'))
+        if hours > 0:
+            pieces.append('{} hour{}'.format(hours, '' if hours == 1 else 's'))
+        if minutes > 0:
+            pieces.append('{} minute{}'.format(minutes, '' if minutes == 1 else 's'))
+        if include_seconds and seconds > 0:
+            pieces.append('{} second{}'.format(seconds, '' if seconds == 1 else 's'))
+        print(pieces, file=sys.stderr)
+        return ', '.join(pieces) + ' ago'
+
 
 class Database:
     def connect(self, db_path = None):
@@ -941,17 +984,20 @@ class Database:
         self.db.commit()
         self.create_user('ajb', 'ajb123')
 
-    # Turn UTC timestamp string from the database into a formatted time string in the local timezone.
-    def convert_timestamp_from_db(self, s):
+    # Turn UTC timestamp string from the database into a datetime object in the local timezone.
+    def db_timestamp_to_datetime(self, s):
         utc_dt = datetime.datetime.strptime(s, '%Y-%m-%d %H:%M:%S')
         utc_dt = utc_dt.replace(tzinfo=dateutil.tz.tzutc())
         local_dt = utc_dt.astimezone(dateutil.tz.tzlocal())
+        return local_dt
+
+    # Turn UTC timestamp string from the database into a formatted time string in the local timezone.
+    def convert_timestamp_from_db(self, s):
+        local_dt = self.db_timestamp_to_datetime(s)
         return local_dt.strftime('%d-%b-%Y %I:%M:%S %p')
 
     def db_timestamp_to_date(self, s):
-        utc_dt = datetime.datetime.strptime(s, '%Y-%m-%d %H:%M:%S')
-        utc_dt = utc_dt.replace(tzinfo=dateutil.tz.tzutc())
-        local_dt = utc_dt.astimezone(dateutil.tz.tzlocal())
+        local_dt = self.db_timestamp_to_datetime(s)
         return datetime.date(local_dt.year, local_dt.month, local_dt.day)
 
     def hash_password(self, password):

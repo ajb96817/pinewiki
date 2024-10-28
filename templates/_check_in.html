@@ -1,0 +1,5 @@
+{% for info in check_in_info %}
+<li>
+  <strong>{{info['username']}}</strong> checked in {{info['time_ago_string']}}
+</li>
+{% endfor %}

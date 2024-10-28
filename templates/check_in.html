@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class="page_wrapper">
+  <div class="pagename">
+    <span class="pagename">check_in</span>
+  </div>
+  <div class="page_content content_box">
+    <h2>Check-In</h2>
+    <ul class="check_in_list" id="check_in_container">
+      {% for info in check_in_info %}
+      <li>
+        <strong>{{info['username']}}</strong> checked in {{info['time_ago_string']}}
+      </li>
+      {% endfor %}
+    </ul>
+    <form action="check_in" method="post" accept-charset="utf-8">
+      <button type="submit" name="action" value="check_in" accesskey="c" id="check_in_button">Check in now</button>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

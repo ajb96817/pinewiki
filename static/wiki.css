@@ -150,6 +150,13 @@ div.chat_post div.chat_actions { float: right; }
 div.chat_post div.chat_content { padding: 0 1em; }
 
 
+#check_in_button {
+    font-size: 125%;
+    font-family: monospace;
+    padding: 0.25em 0.7em;
+    margin-left: 1em;
+}
+
 /* General "main page content" box with border and box-shadow.
    Used for several different page types. */
 div.content_box {

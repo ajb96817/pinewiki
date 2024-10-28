@@ -5,7 +5,7 @@ import calendar
 import re
 from flask import g, Flask, render_template, request, redirect, url_for, flash, send_file, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from models import Database, Page, User, CalendarHelper, ChatroomHelper, JournalHelper, FileHelper
+from models import Database, Page, User, CalendarHelper, ChatroomHelper, JournalHelper, CheckInHelper, FileHelper
 
 
 app = Flask(__name__)
@@ -361,6 +361,36 @@ def post_journal_entry():
 @login_required
 def change_journal_timestamp(pagename):
     return 'not yet implemented'
+
+
+@app.route('/check_in', methods=['GET'])
+@login_required
+def view_check_in():
+    helper = CheckInHelper()
+    check_in_info = helper.load_check_in_info()
+    return render_template(
+        'check_in.html',
+        toolbar_selection='check_in',
+        pagename='check_in',
+        breadcrumbs=helper.breadcrumbs(),
+        check_in_info=check_in_info,
+        is_main_check_in_view=True)
+
+@app.route('/check_in/fetch_latest', methods=['GET'])
+@login_required
+def fetch_latest_check_ins():
+    helper = CheckInHelper()
+    check_in_info = helper.load_check_in_info()
+    return render_template(
+        '_check_in.html',
+        check_in_info=check_in_info)
+
+
+@app.route('/check_in', methods=['POST'])
+@login_required
+def perform_check_in():
+    current_user.perform_check_in()
+    return redirect(url_for('view_check_in'))
 
 
 @app.route('/files', defaults={'path': ''})
