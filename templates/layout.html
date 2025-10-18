@@ -39,13 +39,27 @@
 	  </form>
 	</div>
 	<div class="toolbar">
-	  <a accesskey="p" href="{{url_for('view_page', pagename='start')}}"{{(' class="current"' if toolbar_selection == 'start' else '')|safe}}>Start</a> -
-	  <a accesskey="t" href="{{url_for('view_page', pagename='chat')}}"{{(' class="current"' if toolbar_selection == 'chat' else '')|safe}}>Chat</a> -
-	  <a accesskey="k" href="{{url_for('view_check_in')}}"{{(' class="current"' if toolbar_selection == 'check_in' else '')|safe}}>Check In</a> -
-	  <a accesskey="c" href="{{url_for('todays_calendar')}}"{{(' class="current"' if toolbar_selection == 'calendar' else '')|safe}}>Calendar</a> -
-          <a accesskey="j" href="{{url_for('view_current_user_journal')}}"{{(' class="current"' if toolbar_selection == 'journal' else '')|safe}}>Journal</a> -
-	  <a accesskey="f" href="{{url_for('view_directory', path='')}}"{{(' class="current"' if toolbar_selection == 'files' else '')|safe}}>Files</a> -
-	  <a accesskey="r" href="{{url_for('recent_changes')}}"{{(' class="current"' if toolbar_selection == 'recent_changes' else '')|safe}}>Recent&nbsp;Changes</a> -
+          {% if 'wiki' in g.enabled_features %}
+	  <a accesskey="p" href="{{url_for('view_page', pagename='start')}}"{{(' class="current"' if toolbar_selection == 'start' else '')|safe}}>Start</a> &ndash;
+          {% endif %}
+          {% if 'chat' in g.enabled_features %}
+	  <a accesskey="t" href="{{url_for('view_page', pagename='chat')}}"{{(' class="current"' if toolbar_selection == 'chat' else '')|safe}}>Chat</a> &ndash;
+          {% endif %}
+          {% if 'check_in' in g.enabled_features %}
+	  <a accesskey="k" href="{{url_for('view_check_in')}}"{{(' class="current"' if toolbar_selection == 'check_in' else '')|safe}}>Check In</a> &ndash;
+          {% endif %}
+          {% if 'calendar' in g.enabled_features %}
+	  <a accesskey="c" href="{{url_for('todays_calendar')}}"{{(' class="current"' if toolbar_selection == 'calendar' else '')|safe}}>Calendar</a> &ndash;
+          {% endif %}
+          {% if 'journal' in g.enabled_features %}
+          <a accesskey="j" href="{{url_for('view_current_user_journal')}}"{{(' class="current"' if toolbar_selection == 'journal' else '')|safe}}>Journal</a> &ndash;
+          {% endif %}
+          {% if 'files' in g.enabled_features %}
+	  <a accesskey="f" href="{{url_for('view_directory', path='')}}"{{(' class="current"' if toolbar_selection == 'files' else '')|safe}}>Files</a> &ndash;
+          {% endif %}
+          {% if 'recent_changes' in g.enabled_features %}
+	  <a accesskey="r" href="{{url_for('recent_changes')}}"{{(' class="current"' if toolbar_selection == 'recent_changes' else '')|safe}}>Recent&nbsp;Changes</a> &ndash;
+          {% endif %}
 	  <a accesskey="m" href="{{url_for('view_sitemap')}}"{{(' class="current"' if toolbar_selection == 'sitemap' else '')|safe}}>Sitemap</a>
 	</div>
       </div>

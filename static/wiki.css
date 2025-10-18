@@ -126,7 +126,7 @@ form.edit_page textarea, form.post_chat textarea {
 form.edit_page div.journal_page_info { margin-bottom: 0.5em; }
 form.post_chat textarea { height: 150px; }
 
-div.chat_new_post_area {  margin-bottom: 1em; }
+div.chat_new_post_area { margin-bottom: 1em; }
 div.chat_new_post_area button { font-size: 110%; }
 div.chat_date_separator {
     font-weight: bold;
@@ -337,6 +337,8 @@ table.user_admin { margin: 0 2em; margin-bottom: 1em; }
 table.user_admin td, table.user_admin th { padding: 0.2em 1em; }
 table.user_admin th { border-bottom: 1px solid #ccc; }
 div.admin table.user_profile { margin: 1em; }
+
+ul.site_features_admin { list-style-type: none; }
 
 
 /** codehilite styles follow **/

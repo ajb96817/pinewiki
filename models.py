@@ -920,7 +920,6 @@ class CheckInHelper:
             pieces.append('{} minute{}'.format(minutes, '' if minutes == 1 else 's'))
         if include_seconds and seconds > 0:
             pieces.append('{} second{}'.format(seconds, '' if seconds == 1 else 's'))
-        print(pieces, file=sys.stderr)
         return ', '.join(pieces) + ' ago'
 
 
@@ -936,9 +935,7 @@ class Database:
 
     def init_or_upgrade(self):
         c = self.db.cursor()
-        c.execute(
-            '''create table if not exists
-                 schema_info (version integer)''')
+        c.execute('create table if not exists schema_info (version integer)')
         self.db.commit()
         v = c.execute('select version from schema_info').fetchone()
         if v == None:
@@ -946,50 +943,51 @@ class Database:
 
     def create_initial_schema(self):
         c = self.db.cursor()
-        c.execute(
-            '''insert into schema_info (version) values (?)''', (1,))
-        c.execute('''create table user (
-  id integer primary key autoincrement,
-  username text,
-  password_sha1 text,
-  profile text)''')
-        c.execute(
-            '''create table page (
-  name text primary key,
-  content text,
-  last_modified_timestamp text,
-  last_modified_by_user_id integer)''')
-        c.execute(
-            '''create virtual table page_fts using fts5(name, content)''')
-        c.execute(
-            '''create table event (
-  id integer primary key autoincrement,
-  event_type text,
-  event_target text,
-  event_target_2 text,
-  bytes_changed integer,
-  content text,
-  user_id integer,
-  timestamp text)''')
-        c.execute(
-            '''create index event_target_type_index on event (event_target, event_type, timestamp)''')
-        c.execute(
-            '''create table notification (
-  type text,
-  message text,
-  user_id integer,
-  timestamp text)''')
-        c.execute(
-            '''create index notification_timestamp_index on notification (timestamp)''')
+        c.execute('insert into schema_info (version) values (?)', (1,))
+        c.executescript(self._initial_schema_script())
         self.db.commit()
         self.create_user('ajb', 'ajb123')
 
+    def _initial_schema_script(self):
+        return (
+            '''
+            create table setting (
+                name text primary key,
+                value text);
+            create table user (
+                id integer primary key autoincrement,
+                username text,
+                password_sha1 text,
+                profile text);
+            create table page (
+                name text primary key,
+                content text,
+                last_modified_timestamp text,
+                last_modified_by_user_id integer);
+            create virtual table page_fts using fts5(name, content);
+            create table event (
+                id integer primary key autoincrement,
+                event_type text,
+                event_target text,
+                event_target_2 text,
+                bytes_changed integer,
+                content text,
+                user_id integer,
+                timestamp text);
+            create index event_target_type_index on event (event_target, event_type, timestamp);
+            create table notification (
+                type text,
+                message text,
+                user_id integer,
+                timestamp text);
+            create index notification_timestamp_index on notification (timestamp);
+            ''')
+        
     # Turn UTC timestamp string from the database into a datetime object in the local timezone.
     def db_timestamp_to_datetime(self, s):
         utc_dt = datetime.datetime.strptime(s, '%Y-%m-%d %H:%M:%S')
         utc_dt = utc_dt.replace(tzinfo=dateutil.tz.tzutc())
-        local_dt = utc_dt.astimezone(dateutil.tz.tzlocal())
-        return local_dt
+        return utc_dt.astimezone(dateutil.tz.tzlocal())
 
     # Turn UTC timestamp string from the database into a formatted time string in the local timezone.
     def convert_timestamp_from_db(self, s):
@@ -1000,9 +998,24 @@ class Database:
         local_dt = self.db_timestamp_to_datetime(s)
         return datetime.date(local_dt.year, local_dt.month, local_dt.day)
 
+    def fetch_enabled_features(self):
+        features = set()
+        c = self.db.cursor();
+        for row in self.db.execute('select name, value from setting'):
+            if row[1] == '1':
+                features.add(row[0])
+        return features
+
+    def save_enabled_features(self, feature_names):
+        c = self.db.cursor()
+        c.execute('update setting set value = ?', (0,))
+        c.executemany('insert or replace into setting (name, value) values (?, 1)',
+                      [(name,) for name in feature_names])
+        self.db.commit()
+
     def hash_password(self, password):
+        salted = ':'.join(['pinewikisalt34284324', password])
         h = hashlib.sha256()
-        salted = '{}:{}'.format('pinewikisalt34284324', password)
         h.update(salted.encode('UTF-8'))
         return h.hexdigest()
 
@@ -1011,7 +1024,7 @@ class Database:
         password_sha1 = self.hash_password(password)
         profile_json = json.dumps(profile)
         c = self.db.cursor()
-        c.execute('''insert into user (username, password_sha1, profile) values (?, ?, ?)''',
+        c.execute('insert into user (username, password_sha1, profile) values (?, ?, ?)',
                   (username, password_sha1, profile_json))
         user_id = c.lastrowid
         self.db.commit()
@@ -1023,31 +1036,31 @@ class Database:
         return user
 
     def delete_user_id(self, user_id):
-        self.db.execute('''delete from user where id = ?''', (user_id,))
+        self.db.execute('delete from user where id = ?', (user_id,))
 
     def save_user_changes(self, user):
         profile_json = json.dumps(user.profile)
-        self.db.execute('''update user set username = ?, profile = ? where id = ?''',
+        self.db.execute('update user set username = ?, profile = ? where id = ?',
                         (user.username, profile_json, user.user_id))
 
     # Returns True if password updated successfully; False if old_password doesn't match what's there.
     def change_user_password(self, user_id, old_password, new_password):
         old_password_sha1 = self.hash_password(old_password)
-        row = self.db.execute('''select password_sha1 from user where id = ?''', (user_id,)).fetchone()
+        row = self.db.execute('select password_sha1 from user where id = ?', (user_id,)).fetchone()
         if row is None or row[0] != old_password_sha1:
             return False
         new_password_sha1 = self.hash_password(new_password)
-        self.db.execute('''update user set password_sha1 = ? where id = ?''',
+        self.db.execute('update user set password_sha1 = ? where id = ?',
                         (new_password_sha1, user_id))
         return True
 
     def reset_user_password(self, user_id):
         new_password_sha1 = self.hash_password('hello')
-        self.db.execute('''update user set password_sha1 = ? where id = ?''',
+        self.db.execute('update user set password_sha1 = ? where id = ?',
                         (new_password_sha1, user_id))
 
     def fetch_user_by_username(self, username):
-        row = self.db.execute('''select id, profile from user where username = ?''', (username,)).fetchone()
+        row = self.db.execute('select id, profile from user where username = ?', (username,)).fetchone()
         if row:
             u = User(int(row[0]), username)
             u.set_profile_json(row[1])
@@ -1056,7 +1069,7 @@ class Database:
             return None
 
     def fetch_user_by_id(self, user_id):
-        row = self.db.execute('''select username, profile from user where id = ?''', (user_id,)).fetchone()
+        row = self.db.execute('select username, profile from user where id = ?', (user_id,)).fetchone()
         if row:
             u = User(int(user_id), row[0])
             u.set_profile_json(row[1])
@@ -1066,7 +1079,7 @@ class Database:
 
     def fetch_all_users(self):
         all_users = []
-        for row in self.db.execute('''select id, username, profile from user order by id asc'''):
+        for row in self.db.execute('select id, username, profile from user order by id asc'):
             u = User(int(row[0]), row[1])
             u.set_profile_json(row[2])
             all_users.append(u)
@@ -1078,7 +1091,7 @@ class Database:
         if len(user_ids) == 0:
             return d
         in_clause = ','.join(map(str, user_ids))
-        for row in self.db.execute('''select id, username, profile from user where id in ({})'''.format(in_clause,)):
+        for row in self.db.execute('select id, username, profile from user where id in ({})'.format(in_clause,)):
             u = User(int(row[0]), row[1])
             u.set_profile_json(row[2])
             d[row[0]] = u
@@ -1086,7 +1099,7 @@ class Database:
 
     def authenticate_user(self, username, password):
         password_sha1 = self.hash_password(password)
-        row = self.db.execute('''select id, username, password_sha1, profile from user where username = ?''', (username,)).fetchone()
+        row = self.db.execute('select id, username, password_sha1, profile from user where username = ?', (username,)).fetchone()
         if row and row[2] == password_sha1:
             u = User(int(row[0]), row[1])
             u.set_profile_json(row[3])
@@ -1109,7 +1122,7 @@ class Database:
     def fetch_pages(self, pagenames):
         in_clause = ','.join(['"'+p+'"' for p in pagenames])
         pages = []
-        for row in self.db.execute('''select name, content, last_modified_timestamp, last_modified_by_user_id from page where name in ({})'''.format(in_clause,)):
+        for row in self.db.execute('select name, content, last_modified_timestamp, last_modified_by_user_id from page where name in ({})'.format(in_clause,)):
             p = Page(row[0], row[1])
             p.last_modified_timestamp = row[2]
             p.last_modified_by_user_id = row[3]
@@ -1129,8 +1142,8 @@ class Database:
                     event_type='delete_page', event_target=page.name,
                     user_id=page.last_modified_by_user_id, content=old_page.content,
                     bytes_changed=-len(old_page.content))
-                self.db.execute('''delete from page where name = ?''', (page.name,))
-                self.db.execute('''delete from page_fts where name = ?''', (page.name,))
+                self.db.execute('delete from page where name = ?', (page.name,))
+                self.db.execute('delete from page_fts where name = ?', (page.name,))
             else:
                 # old page is being replaced
                 self.record_event(
@@ -1141,7 +1154,7 @@ class Database:
                     '''update page set content = ?, last_modified_timestamp = datetime('now'), last_modified_by_user_id = ? where name = ?''',
                     (page.content, page.last_modified_by_user_id, page.name))
                 self.db.execute(
-                    '''update page_fts set content = ? where name = ?''', (page.content, page.name))
+                    'update page_fts set content = ? where name = ?', (page.content, page.name))
         else:
             if page.is_empty():
                 # 'new' empty page is being 'created' - ignore
@@ -1156,7 +1169,7 @@ class Database:
                     '''insert into page (name, content, last_modified_timestamp, last_modified_by_user_id) values (?, ?, datetime('now'), ?)''',
                     (page.name, page.content, page.last_modified_by_user_id))
                 self.db.execute(
-                    '''insert into page_fts (name, content) values (?, ?)''', (page.name, page.content))
+                    'insert into page_fts (name, content) values (?, ?)', (page.name, page.content))
 
     def rename_page(self, page, new_pagename):
         pass
@@ -1164,7 +1177,7 @@ class Database:
     def fulltext_search(self, query, limit=20, offset=0):
         results = []
         for row in self.db.execute(
-                '''select name, snippet(page_fts, 1, ?, ?, ?, 20) from page_fts where content match ? order by bm25(page_fts) limit ?,?''',
+                'select name, snippet(page_fts, 1, ?, ?, ?, 20) from page_fts where content match ? order by bm25(page_fts) limit ?,?',
                 ('', '', '...', query, offset, limit)):
             results.append({
                 'pagename': row[0],
@@ -1173,7 +1186,7 @@ class Database:
 
     def fetch_all_pagenames_set(self):
         pagenames = set()
-        for row in self.db.execute('''select name from page'''):
+        for row in self.db.execute('select name from page'):
             # special case: exclude chat "pages" from this
             if not row[0].startswith('chat:'):
                 pagenames.add(row[0])
@@ -1209,7 +1222,7 @@ class Database:
             cutoff_timestamp = '0'
         notifications = []
         for row in self.db.execute(
-                '''select type, message, user_id, timestamp from notification where timestamp > ? and user_id != ? order by timestamp desc limit ?''', (cutoff_timestamp, user_id, limit)):
+                'select type, message, user_id, timestamp from notification where timestamp > ? and user_id != ? order by timestamp desc limit ?', (cutoff_timestamp, user_id, limit)):
             notifications.append({
                 'type': row[0],
                 'message': row[1],
@@ -1220,9 +1233,9 @@ class Database:
     def fetch_sitemap(self):
         page_infos = []
         for row in self.db.execute(
-'''select name, length(content), last_modified_timestamp, last_modified_by_user_id
-from page where name not like ? and name not like ?''',
-                ('chat:%', 'calendar:%')):
+                '''select name, length(content), last_modified_timestamp, last_modified_by_user_id
+                from page where name not like ? and name not like ?''',
+                ('chat:%', 'calendar:%', 'journal:%')):
             p = {
                 'pagename': row[0],
                 'filesize': int(row[1]),
@@ -1245,10 +1258,10 @@ from page where name not like ? and name not like ?''',
         time_cutoff = time.time() - limit_in_seconds
         pagename_cutoff = 'chat:{}'.format(str(time_cutoff).replace('.', '_'))
         pages = []
-        for row in self.db.execute('''
-select name, content, last_modified_timestamp, last_modified_by_user_id 
-from page where name >= ? and name like ? order by name desc limit ?''',
-                                   (pagename_cutoff, 'chat:%', limit)):
+        for row in self.db.execute(
+                '''select name, content, last_modified_timestamp, last_modified_by_user_id 
+                from page where name >= ? and name like ? order by name desc limit ?''',
+                (pagename_cutoff, 'chat:%', limit)):
             p = Page(row[0], row[1])
             p.last_modified_timestamp = row[2]
             p.last_modified_by_user_id = row[3]
@@ -1260,7 +1273,8 @@ from page where name >= ? and name like ? order by name desc limit ?''',
     def delete_chat_page(self, pagename):
         is_valid_pagename = bool(re.match(r'^chat:\d+_\d+$', pagename)) and len(pagename) < 100
         if is_valid_pagename:
-            self.db.execute('''delete from page where name = ?''', (pagename,))
+            self.db.execute('delete from page where name = ?', (pagename,))
+        # TODO: also delete from FTS index
 
     def fetch_calendar_pages_in_month(self, month, year):
         pattern = 'calendar:%_{}_{:04d}'.format(
@@ -1268,16 +1282,16 @@ from page where name >= ? and name like ? order by name desc limit ?''',
         # NOTE: We only use the name and content for the calendar display;
         # don't need to bother with last_modified_*
         pages = []
-        for row in self.db.execute('''select name, content from page where name like ?''', (pattern,)):
+        for row in self.db.execute('select name, content from page where name like ?', (pattern,)):
             p = Page(row[0], row[1])
             pages.append(p)
         return pages
 
     def fetch_recent_events(self, limit=20, skip=0):
         events = []
-        for row in self.db.execute('''
-select id, event_type, event_target, event_target_2, bytes_changed, user_id, timestamp
-from event order by timestamp desc limit ?,?''', (skip, limit)):
+        for row in self.db.execute(
+                '''select id, event_type, event_target, event_target_2, bytes_changed, user_id, timestamp
+                from event order by timestamp desc limit ?,?''', (skip, limit)):
             event = Event()
             event.id = row[0]
             event.event_type = row[1]
@@ -1292,10 +1306,10 @@ from event order by timestamp desc limit ?,?''', (skip, limit)):
 
     def fetch_page_events(self, pagename, limit=20, skip=0):
         events = []
-        for row in self.db.execute('''
-select id, event_type, event_target, event_target_2, bytes_changed, user_id, timestamp
-from event where event_target = ? and event_type in ('create_page','edit_page','delete_page','rename_page')
-order by timestamp desc limit ?,?''', (pagename, skip, limit)):
+        for row in self.db.execute(
+                '''select id, event_type, event_target, event_target_2, bytes_changed, user_id, timestamp
+                from event where event_target = ? and event_type in ('create_page','edit_page','delete_page','rename_page')
+                order by timestamp desc limit ?,?''', (pagename, skip, limit)):
             event = Event()
             event.id = row[0]
             event.event_type = row[1]
