@@ -375,6 +375,36 @@ def send_email_notificiations(notification_type, message, user_id):
                 user.send_email_notification(notification_type, message)
 
 
+class SiteHelper:
+    # Generate the top navigation toolbar.
+    # Only "features" that are enabled in the site_config will be shown.
+    def generate_toolbar(self, toolbar_selection):
+        item_specs = [
+            ['start', 'Start', 'p', url_for('view_page', pagename='start')],
+            ['chat', 'Chat', 't', url_for('view_page', pagename='chat')],
+            ['check_in', 'Check In', 'k', url_for('view_check_in')],
+            ['calendar', 'Calendar', 'c', url_for('todays_calendar')],
+            ['journal', 'Journal', 'j', url_for('view_current_user_journal')],
+            ['files', 'Files', 'f', url_for('view_directory', path='')],
+            ['recent_changes', 'Recent&nbsp;Changes', 'r', url_for('recent_changes')],
+            ['sitemap', 'Sitemap', 'm', url_for('view_sitemap')]]
+        item_pieces = [
+            self._toolbar_item(*item_spec, toolbar_selection)
+            for item_spec in item_specs]
+        return ' &ndash; '.join(item_pieces)
+
+    def _toolbar_item(self, item_name, label, accesskey, url, toolbar_selection):
+        attributes = [f'href="{url}"']
+        if accesskey:
+            attributes.append(f'accesskey="{accesskey}"')
+        if item_name == toolbar_selection:
+            attributes.append('class="current"');
+        return ''.join([
+            '<a ', ' '.join(attributes), '>',
+            label,
+            '</a>'])
+
+
 class CalendarHelper(calendar.Calendar):
     def __init__(self, month, year):
         super().__init__(6)
@@ -951,9 +981,6 @@ class Database:
     def _initial_schema_script(self):
         return (
             '''
-            create table setting (
-                name text primary key,
-                value text);
             create table user (
                 id integer primary key autoincrement,
                 username text,
@@ -997,21 +1024,6 @@ class Database:
     def db_timestamp_to_date(self, s):
         local_dt = self.db_timestamp_to_datetime(s)
         return datetime.date(local_dt.year, local_dt.month, local_dt.day)
-
-    def fetch_enabled_features(self):
-        features = set()
-        c = self.db.cursor();
-        for row in self.db.execute('select name, value from setting'):
-            if row[1] == '1':
-                features.add(row[0])
-        return features
-
-    def save_enabled_features(self, feature_names):
-        c = self.db.cursor()
-        c.execute('update setting set value = ?', (0,))
-        c.executemany('insert or replace into setting (name, value) values (?, 1)',
-                      [(name,) for name in feature_names])
-        self.db.commit()
 
     def hash_password(self, password):
         salted = ':'.join(['pinewikisalt34284324', password])
@@ -1234,7 +1246,7 @@ class Database:
         page_infos = []
         for row in self.db.execute(
                 '''select name, length(content), last_modified_timestamp, last_modified_by_user_id
-                from page where name not like ? and name not like ?''',
+                from page where name not like ? and name not like ? and name not like ?''',
                 ('chat:%', 'calendar:%', 'journal:%')):
             p = {
                 'pagename': row[0],

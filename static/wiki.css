@@ -338,8 +338,6 @@ table.user_admin td, table.user_admin th { padding: 0.2em 1em; }
 table.user_admin th { border-bottom: 1px solid #ccc; }
 div.admin table.user_profile { margin: 1em; }
 
-ul.site_features_admin { list-style-type: none; }
-
 
 /** codehilite styles follow **/
 

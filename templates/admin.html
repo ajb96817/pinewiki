@@ -60,24 +60,12 @@
     </table>
   </form>
 
-  <h3>Enabled Site Features</h3>
+  <h3>Site Settings</h3>
 
-  <form method="post" accept-charset="utf-8" action="{{url_for('update_site_features')}}">
-    <ul class="site_features_admin">
-      {% for feature_name in available_features %}
-      <li>
-        <input type="checkbox"
-               id="feature_{{feature_name}}"
-               name="feature_{{feature_name}}_enabled" value="1"
-               {% if feature_name in enabled_features %} checked {% endif %} />
-        <label for="feature_{{feature_name}}">{{feature_name}}</label>
-      </li>
-      {% endfor %}
-    </ul>
-    <p style="margin-left: 2em;">
-      <button type="submit" name="action" value="save">Update Site Features</button>
-    </p>
-  </form>
+  <p style="margin-left: 1em;">
+    Enabled site features:
+    <strong>{{', '.join(enabled_features)}}</strong>
+  </p>
 </div>
 
 {% endblock %}

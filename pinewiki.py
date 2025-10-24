@@ -5,7 +5,11 @@ import calendar
 import re
 from flask import g, Flask, render_template, request, redirect, url_for, flash, send_file, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from models import Database, Page, User, CalendarHelper, ChatroomHelper, JournalHelper, CheckInHelper, FileHelper
+
+from site_config import site_config
+from models import Database, Page, User
+from models import SiteHelper, CalendarHelper, ChatroomHelper, JournalHelper, CheckInHelper, FileHelper
+
 
 
 app = Flask(__name__)
@@ -39,7 +43,7 @@ def redirect_home():
 def before_request():
     g.database = Database()
     g.database.connect()
-    g.enabled_features = g.database.fetch_enabled_features()
+    g.site_helper = SiteHelper()
 
 @app.teardown_request
 def teardown_request(exception):
@@ -96,7 +100,7 @@ def view_page(pagename):
 @login_required
 def edit_page(pagename):
     page = g.database.fetch_page(pagename) or Page(pagename)
-    if 'journal' in g.enabled_features and page.is_journal_page():
+    if site_config.feature_enabled('journal') in g.enabled_features and page.is_journal_page():
         journal_page_timestamp = JournalHelper().formatted_time_from_journal_pagename(page.name)
         is_owned_journal_page = JournalHelper.parse_journal_pagename(page.name)['username'] == current_user.username
     else:
@@ -147,7 +151,7 @@ def edit_page(pagename):
 @app.route('/changes', methods=['GET'])
 @login_required
 def recent_changes():
-    if not 'recent_changes' in g.enabled_features:
+    if not site_config.feature_enabled('recent_changes'):
         return redirect_home()
     per_page = 30
     page_str = request.args.get('page') or '1'
@@ -167,7 +171,7 @@ def recent_changes():
 @app.route('/calendar', methods=['GET'])
 @login_required
 def todays_calendar():
-    if not 'calendar' in g.enabled_features:
+    if not site_config.feature_enabled('calendar'):
         return redirect_home()
     now_local = current_local_timestamp()
     return redirect(url_for(
@@ -178,7 +182,7 @@ def todays_calendar():
 @app.route('/calendar/<int:year>/<int:month>', methods=['GET'])
 @login_required
 def view_calendar(year, month):
-    if not 'calendar' in g.enabled_features:
+    if not site_config.feature_enabled('calendar'):
         return redirect_home()
     helper = CalendarHelper(int(month), int(year))
     ((prev_month, prev_year), (next_month, next_year)) = helper.prev_and_next_month_and_year()
@@ -219,7 +223,7 @@ def view_page_changes(pagename):
 @app.route('/chat', methods=['GET'])
 @login_required
 def view_chat():
-    if not 'chat' in g.enabled_features:
+    if not site_config.feature_enabled('chat'):
         return redirect_home()
     helper = ChatroomHelper()
     if request.args.get('older') == '1':
@@ -254,7 +258,7 @@ def fetch_latest_chats():
 @app.route('/chat', methods=['POST'])
 @login_required
 def post_chat():
-    if not 'chat' in g.enabled_features:
+    if not site_config.feature_enabled('chat'):
         return redirect_home()
     content = request.form['page_content'].strip()
     action = request.form['action']
@@ -282,7 +286,7 @@ def post_chat():
 @app.route('/chat/delete/<pagename>')
 @login_required
 def delete_chat_item(pagename):
-    if not 'chat' in g.enabled_features:
+    if not site_config.feature_enabled('chat'):
         return redirect_home()
     g.database.delete_chat_page(pagename)  # NOTE: this handles validation of pagename itself
     return redirect(url_for('view_chat'))
@@ -291,7 +295,7 @@ def delete_chat_item(pagename):
 @app.route('/journal', methods=['GET'])
 @login_required
 def view_current_user_journal():
-    if not 'journal' in g.enabled_features:
+    if not site_config.feature_enabled('journal'):
         return redirect_home()
     now_local = current_local_timestamp()
     return redirect(url_for(
@@ -303,7 +307,7 @@ def view_current_user_journal():
 @app.route('/journal/<username>', methods=['GET'])
 @login_required
 def view_user_journal(username):
-    if not 'journal' in g.enabled_features:
+    if not site_config.feature_enabled('journal'):
         return redirect_home()
     user = g.database.fetch_user_by_username(username) or current_user
     now_local = current_local_timestamp()
@@ -322,7 +326,7 @@ def switch_journal_user():
 @app.route('/journal/<username>/<int:year>/<int:month>', methods=['GET'])
 @login_required
 def view_journal(username, year, month):
-    if not 'journal' in g.enabled_features:
+    if not site_config.feature_enabled('journal'):
         return redirect_home()
     now_local = current_local_timestamp()
     helper = JournalHelper()
@@ -356,7 +360,7 @@ def view_journal(username, year, month):
 @app.route('/journal', methods=['POST'])
 @login_required
 def post_journal_entry():
-    if not 'journal' in g.enabled_features:
+    if not site_config.feature_enabled('journal'):
         return redirect_home()
     content = request.form['entry_content'].strip()
     action = request.form['action']
@@ -392,7 +396,7 @@ def change_journal_timestamp(pagename):
 @app.route('/check_in', methods=['GET'])
 @login_required
 def view_check_in():
-    if not 'check_in' in g.enabled_features:
+    if not site_config.feature_enabled('check_in'):
         return redirect_home()
     helper = CheckInHelper()
     check_in_info = helper.load_check_in_info()
@@ -417,7 +421,7 @@ def fetch_latest_check_ins():
 @app.route('/check_in', methods=['POST'])
 @login_required
 def perform_check_in():
-    if not 'check_in' in g.enabled_features:
+    if not site_config.feature_enabled('check_in'):
         return redirect_home()
     current_user.perform_check_in()
     return redirect(url_for('view_check_in'))
@@ -427,7 +431,7 @@ def perform_check_in():
 @app.route('/files/<path:path>')
 @login_required
 def view_directory(path):
-    if not 'files' in g.enabled_features:
+    if not site_config.feature_enabled('files'):
         return redirect_home()
     helper = FileHelper()
     subdirectories, file_details = helper.list_subdirectories_and_file_details(path)
@@ -450,7 +454,7 @@ def view_directory(path):
 @app.route('/create_directory', methods=['POST'])
 @login_required
 def create_directory():
-    if not 'files' in g.enabled_features:
+    if not site_config.feature_enabled('files'):
         return redirect_home()
     helper = FileHelper()
     path = request.args.get('path')
@@ -463,7 +467,7 @@ def create_directory():
 @app.route('/delete_directory', methods=['GET', 'POST'])
 @login_required
 def delete_directory():
-    if not 'files' in g.enabled_features:
+    if not site_config.feature_enabled('files'):
         return redirect_home()
     helper = FileHelper()
     path = request.args.get('path')
@@ -473,7 +477,7 @@ def delete_directory():
 @app.route('/download_file/<filename>', methods=['GET'])
 @login_required
 def download_file(filename):
-    if not 'files' in g.enabled_features:
+    if not site_config.feature_enabled('files'):
         return redirect_home()
     helper = FileHelper()
     path = request.args.get('path') or ''
@@ -489,7 +493,7 @@ def download_file(filename):
 @app.route('/upload_file', methods=['GET', 'POST'])
 @login_required
 def upload_file():
-    if not 'files' in g.enabled_features:
+    if not site_config.feature_enabled('files'):
         return redirect_home()
     helper = FileHelper()
     current_path = request.args.get('path') or ''
@@ -517,7 +521,7 @@ def upload_file():
 @app.route('/move_file', methods=['GET', 'POST'])
 @login_required
 def move_file():
-    if not 'files' in g.enabled_features:
+    if not site_config.feature_enabled('files'):
         return redirect_home()
     helper = FileHelper()
     path = request.args.get('path') or ''
@@ -543,7 +547,7 @@ def move_file():
 @app.route('/delete_file')
 @login_required
 def delete_file():
-    if not 'files' in g.enabled_features:
+    if not site_config.feature_enabled('files'):
         return redirect_home()
     helper = FileHelper()
     path = request.args.get('path') or ''
@@ -675,8 +679,7 @@ def site_admin():
         'admin.html',
         pagename='admin',
         all_users=all_users,
-        available_features=app.config['AVAILABLE_FEATURES'],
-        enabled_features=g.enabled_features)
+        enabled_features=site_config.enabled_features)
 
 @app.route('/admin/create_user', methods=['POST'])
 @login_required
@@ -697,15 +700,5 @@ def reset_password(user_id):
 def delete_user(user_id):
     if user_id != current_user.user_id:
         g.database.delete_user_id(user_id)
-    return redirect(url_for('site_admin'))
-    
-@app.route('/admin/update_site_features', methods=['POST'])
-@login_required
-def update_site_features():
-    new_enabled_features = {
-        feature_name for feature_name in app.config['AVAILABLE_FEATURES']
-        if f'feature_{feature_name}_enabled' in request.form }
-    g.database.save_enabled_features(new_enabled_features)
-    flash('Site features updated.')
     return redirect(url_for('site_admin'))
     
