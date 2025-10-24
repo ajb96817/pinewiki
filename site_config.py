@@ -16,12 +16,12 @@ site_config = SiteConfig({
   
   'sitename': 'pinewiki',
 
-  # TODO: path from pinewiki.wsgi
+  'root_dir': '/var/www/pinewiki',
 
   # TODO: 'favicon'
 
   # Optional "theme" CSS file, in addition to the base wiki.css
-  'extra_css': None,
+  'extra_css': None, # 'journal.css',
 
   # Secret key for Flask user authentication
   'secret_key': 'ueahrucahrou',

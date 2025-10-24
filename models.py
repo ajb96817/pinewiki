@@ -20,6 +20,9 @@ import markdown
 import xml.etree.ElementTree
 import re
 
+from site_config import site_config
+
+
 
 # DokuWiki syntax:
 #   [[pagename]], [[path1:path2:pagename]], [[pagename|Link Text]]
@@ -376,6 +379,15 @@ def send_email_notificiations(notification_type, message, user_id):
 
 
 class SiteHelper:
+    def sitename(self):
+        return site_config.sitename
+
+    def extra_css_url(self):
+        if site_config.extra_css:
+            return url_for('static', filename=site_config.extra_css)
+        else:
+            return None
+    
     # Generate the top navigation toolbar.
     # Only "features" that are enabled in the site_config will be shown.
     def generate_toolbar(self, toolbar_selection):
@@ -390,7 +402,8 @@ class SiteHelper:
             ['sitemap', 'Sitemap', 'm', url_for('view_sitemap')]]
         item_pieces = [
             self._toolbar_item(*item_spec, toolbar_selection)
-            for item_spec in item_specs]
+            for item_spec in item_specs
+            if site_config.feature_enabled(item_spec[0])]
         return ' &ndash; '.join(item_pieces)
 
     def _toolbar_item(self, item_name, label, accesskey, url, toolbar_selection):
