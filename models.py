@@ -787,7 +787,7 @@ class ChatroomHelper:
         return dt_local.strftime('%d-%b-%Y %I:%M:%S %p')
     
     COLORS = ['#fdd', '#ddf', '#dfd', '#ffd', '#fdf', '#dff']
-    COLOR_TINTS = ['#fff8f8', '#f8f8ff', '#f8fff8', '#fff8ff', '#f8ffff']
+    COLOR_TINTS = ['#fff8f8', '#f8f8ff', '#f8fff8', '#fffff8', '#fff8ff', '#f8ffff']
     COLORNAMES = ['red', 'blue', 'green', 'yellow', 'pink', 'cyan']
         
     def post_new_chat(self, content, user_id):
