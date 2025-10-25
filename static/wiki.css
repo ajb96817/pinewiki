@@ -109,7 +109,10 @@ div.page_wrapper div.preview h2 {
 
 div.pagination { padding: 0.5em 2em; }
 
-form.edit_page textarea, form.post_chat textarea, form.post_journal_entry textarea {
+form.edit_page textarea,
+form.post_chat textarea,
+form.post_journal_entry textarea,
+form.post_journal_entry input {
     border: 1px solid #aaa;
     background-color: #f8f8f8;
     padding: 0.2em 0.5em;
@@ -176,6 +179,7 @@ table.events td.byteschanged_negative { background-color: #fcc; }
 table.events tr:hover td.byteschanged_negative { background-color: #ebb; }
 table.events td.byteschanged_positive { background-color: #cfc; }
 table.events tr:hover td.byteschanged_positive { background-color: #beb; }
+table.events td.description { overflow-wrap: anywhere; }
 /*table.events td.commands { border-left: 1px solid #ccc; }*/
 
 
@@ -234,6 +238,7 @@ div.folder_list ul { list-style-type: none; }
 h2.monthname {
     clear: both;
     border: none;
+    background-color: inherit;
     font-weight: normal;
     text-align: center;
     padding-top: 1em;
@@ -294,23 +299,48 @@ div.journal_navigation {
 div.journal_navigation div.current_journal_user { margin-bottom: 0.25em; }
 div.journal_navigation a.selected { font-weight: bold; }
 div.journal_new_entry_area { margin-bottom: 1em; }
+div.journal_new_entry_field_label {
+  margin-top: 0.5em;
+  margin-bottom: 0.25em;
+}
+form.post_journal_entry textarea,
+form.post_journal_entry input {
+  margin: 0;
+  padding: 0.5em;
+}
+
+div.journal_new_entry_area textarea { width: 95%; height: 10em; }
 div.journal_new_entry_area button { font-size: 110%; }
 div.journal_new_entry_area input { font-size: 110%; font-family: monospace; width: 20em; }
 div.post_journal_entry_controls_row { margin: 0.2em 0; }
-div.journal_entry .journal_timestamp {
-    font-weight: bold;
-    border-bottom: 2px solid #ddd;
-    width: auto;
-    float: left;
-    margin-bottom: 0.2em;
-}
-div.journal_entry div.journal_entry_content { clear: left; }
-div.journal_entry div.journal_month_year_header {
+
+div.journal_month_year_header {
     font-size: 150%;
     font-weight: bold;
     margin-bottom: 0.5em;
     margin-top: 1em;
 }
+div.journal_entry {
+    width: auto;
+    float: left;
+    clear: left;
+    margin-bottom: 0.5em;
+}
+div.journal_entry_summary {
+    margin-bottom: 0.2em;
+}
+.journal_entry_timestamp {
+    cursor: pointer;
+    color: #44f;
+    font-weight: bold;
+    border-bottom: 2px solid #ddd;
+}
+span.journal_entry_title {}
+div.journal_entry_content { display: none; }
+div.journal_entry span.collapser { cursor: pointer; }
+div.journal_entry span.collapser:before { content: "\25B6"; }
+div.journal_entry.expanded span.collapser:before { content: "\25BC"; }
+div.journal_entry.expanded div.journal_entry_content { display: block; }
 
 
 div.sitemap { padding: 1em 2em; }

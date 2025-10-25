@@ -19,6 +19,9 @@
     {% if is_main_check_in_view %}
     <script type="text/javascript" charset="utf-8" src="{{url_for('static', filename='check_in.js')}}"></script>
     {% endif %}
+    {% if is_journal_view %}
+    <script type="text/javascript" charset="utf-8" src="{{url_for('static', filename='journal.js')}}"></script>
+    {% endif %}
   </head>
 
   <body>

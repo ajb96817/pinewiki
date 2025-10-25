@@ -10,7 +10,7 @@
       <tr>
 	<td class="timestamp">{{event.formatted_timestamp()}}</td>
 	<td class="{{event.bytes_changed_css_class()}}">{{event.formatted_bytes_changed()|safe}}</td>
-	<td>{{event.formatted_description()|safe}}</td>
+	<td class="description">{{event.formatted_description()|safe}}</td>
 	<td class="commands">
 	  {% if event.is_diffable() %}
 	  <a href="#" onclick="alert('not yet implemented')">View Change</a> -

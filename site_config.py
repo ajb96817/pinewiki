@@ -21,7 +21,8 @@ site_config = SiteConfig({
   # TODO: 'favicon'
 
   # Optional "theme" CSS file, in addition to the base wiki.css
-  'extra_css': None, # 'journal.css',
+  #'extra_css': None,
+  'extra_css': 'journal.css',
 
   # Secret key for Flask user authentication
   'secret_key': 'ueahrucahrou',

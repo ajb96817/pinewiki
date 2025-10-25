@@ -20,10 +20,6 @@ app.config['SECRET_KEY'] = 'ueahrucahrou'
 app.config['MAX_CONTENT_LENGTH'] = 100*1024*1024  # max uploaded file size
 app.config['REDIS_HOST'] = 'localhost'
 app.config['REDIS_PORT'] = 6379
-app.config['AVAILABLE_FEATURES'] = [
-    'wiki', 'files', 'chat', 'recent_changes',
-    'check_in', 'calendar', 'journal'
-]
 
 
 def current_local_timestamp():
@@ -100,7 +96,7 @@ def view_page(pagename):
 @login_required
 def edit_page(pagename):
     page = g.database.fetch_page(pagename) or Page(pagename)
-    if site_config.feature_enabled('journal') in g.enabled_features and page.is_journal_page():
+    if site_config.feature_enabled('journal') and page.is_journal_page():
         journal_page_timestamp = JournalHelper().formatted_time_from_journal_pagename(page.name)
         is_owned_journal_page = JournalHelper.parse_journal_pagename(page.name)['username'] == current_user.username
     else:
@@ -347,6 +343,7 @@ def view_journal(username, year, month):
         pagename='journal',
         breadcrumbs=helper.breadcrumbs(journal_user, year, month),
         helper=helper,
+        is_journal_view=True,
         entry_summary=entry_summary,
         journal_pages=journal_pages,
         all_users=all_users,
@@ -363,6 +360,9 @@ def post_journal_entry():
     if not site_config.feature_enabled('journal'):
         return redirect_home()
     content = request.form['entry_content'].strip()
+    title = request.form['entry_title'].strip()
+    if len(title) == 0:
+        title = None
     action = request.form['action']
     helper = JournalHelper()
     if action == 'save_with_system_time':
@@ -377,15 +377,16 @@ def post_journal_entry():
     else:
         save_entry = False
     if save_entry:
-        helper.post_journal_entry(content, current_user, entry_timestamp)
+        helper.post_journal_entry(content, title, current_user, entry_timestamp)
         g.database.create_notification(
             'journal',
             '{} posted a new journal entry'.format(current_user.username),
             current_user.user_id)
-    return redirect(url_for('view_journal',
-                            username=current_user.username,
-                            year=entry_timestamp.year,
-                            month=entry_timestamp.month))
+    return redirect(url_for(
+        'view_journal',
+        username=current_user.username,
+        year=entry_timestamp.year,
+        month=entry_timestamp.month))
     
 @app.route('/change_journal_timestamp/<pagename>', methods=['GET', 'POST'])
 @login_required
@@ -679,7 +680,7 @@ def site_admin():
         'admin.html',
         pagename='admin',
         all_users=all_users,
-        enabled_features=site_config.enabled_features)
+        site_config=site_config)
 
 @app.route('/admin/create_user', methods=['POST'])
 @login_required

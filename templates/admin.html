@@ -62,10 +62,12 @@
 
   <h3>Site Settings</h3>
 
-  <p style="margin-left: 1em;">
-    Enabled site features:
-    <strong>{{', '.join(enabled_features)}}</strong>
-  </p>
+  <ul>
+    <li>Site name: <strong>{{site_config.sitename}}</strong></li>
+    <li>Enabled site features: <strong>{{', '.join(site_config.enabled_features)}}</strong></li>
+    <li>Root directory: <strong>{{site_config.root_dir}}</strong></li>
+    <li>Redis: <strong>{{site_config.redis['host']}}:{{site_config.redis['port']}}<strong></li>
+  </ul>
 </div>
 
 {% endblock %}

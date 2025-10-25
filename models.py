@@ -222,7 +222,7 @@ class User(UserMixin):
             'body': message
         }
         task_json = json.dumps(task)
-        r = redis.Redis(host=app.config['REDIS_HOST'], port=app.config['REDIS_PORT'])
+        r = redis.Redis(host=site_config.redis['host'], port=site_config.redis['port'])
         r.rpush('email_task_queue', task_json)
         r.close()
         # update last-sent timestamp to implement rate throttling
@@ -471,9 +471,17 @@ class CalendarHelper(calendar.Calendar):
 
 
 class Page:
-    def __init__(self, name, content=''):
+    def __init__(self, name, content='', title=None):
         self.name = name
         self.content = content
+        self.title = title
+        self.comments = []
+
+    def set_comments_json(self, comments_json):
+        self.comments = json.loads(comments_json) if comments_json else []
+
+    def comments_as_json(self):
+        return json.dumps(self.comments) if self.comments else None
 
     def has_encryption(self):
         return '<ENCRYPTED' in self.content
@@ -919,10 +927,10 @@ class JournalHelper:
         return parsed['year'], parsed['month_index']
 
     # Returns created/updated Page object
-    def post_journal_entry(self, content, user, timestamp):
+    def post_journal_entry(self, content, title, user, timestamp):
         pagename = JournalHelper.pagename_for_username_and_datetime(user.username, timestamp)
         # TODO: merge already-existing pages with new content
-        page = Page(pagename, content)
+        page = Page(pagename, content, title)
         page.last_modified_by_user_id = user.user_id
         g.database.update_page(page)
         return page
@@ -1001,7 +1009,9 @@ class Database:
                 profile text);
             create table page (
                 name text primary key,
+                title text,
                 content text,
+                comments_json json,
                 last_modified_timestamp text,
                 last_modified_by_user_id integer);
             create virtual table page_fts using fts5(name, content);
@@ -1146,12 +1156,12 @@ class Database:
     # NOTE: pages will be returned in the same order as in 'pagenames'.
     def fetch_pages(self, pagenames):
         in_clause = ','.join(['"'+p+'"' for p in pagenames])
-        pages = []
-        for row in self.db.execute('select name, content, last_modified_timestamp, last_modified_by_user_id from page where name in ({})'.format(in_clause,)):
-            p = Page(row[0], row[1])
-            p.last_modified_timestamp = row[2]
-            p.last_modified_by_user_id = row[3]
-            pages.append(p)
+        pages = [
+            self._page_from_db_row(row)
+            for row in self.db.execute(
+                '''select name, title, content, comments_json,
+                last_modified_timestamp, last_modified_by_user_id
+                from page where name in ({})'''.format(in_clause,))]
         page_order_map = dict()
         for index, pagename in enumerate(pagenames):
             page_order_map[pagename] = index
@@ -1176,8 +1186,10 @@ class Database:
                     user_id=page.last_modified_by_user_id, content=old_page.content,
                     bytes_changed=len(page.content)-len(old_page.content))
                 self.db.execute(
-                    '''update page set content = ?, last_modified_timestamp = datetime('now'), last_modified_by_user_id = ? where name = ?''',
-                    (page.content, page.last_modified_by_user_id, page.name))
+                    '''update page set content = ?, title = ?, comments_json = ?,
+                    last_modified_timestamp = datetime('now'), last_modified_by_user_id = ? where name = ?''',
+                    (page.content, page.title, page.comments_as_json(),
+                     page.last_modified_by_user_id, page.name))
                 self.db.execute(
                     'update page_fts set content = ? where name = ?', (page.content, page.name))
         else:
@@ -1191,12 +1203,15 @@ class Database:
                     user_id=page.last_modified_by_user_id, content=page.content,
                     bytes_changed=len(page.content))
                 self.db.execute(
-                    '''insert into page (name, content, last_modified_timestamp, last_modified_by_user_id) values (?, ?, datetime('now'), ?)''',
-                    (page.name, page.content, page.last_modified_by_user_id))
+                    '''insert into page (name, content, title, comments_json,
+                    last_modified_timestamp, last_modified_by_user_id) values (?, ?, ?, ?, datetime('now'), ?)''',
+                    (page.name, page.content, page.title, page.comments_as_json(),
+                     page.last_modified_by_user_id))
                 self.db.execute(
                     'insert into page_fts (name, content) values (?, ?)', (page.name, page.content))
 
     def rename_page(self, page, new_pagename):
+        # Not yet implemented
         pass
 
     def fulltext_search(self, query, limit=20, offset=0):
@@ -1229,7 +1244,7 @@ class Database:
     def create_page_edit_notification(self, page, user):
         pagename = page.name
         if pagename.startswith('chat:'):
-            return
+            return  # don't notify for chat edits, only for new chat messages
         elif pagename.startswith('calendar:'):
             parsed_date_string = CalendarHelper.parse_calendar_pagename(pagename)
             if parsed_date_string is None:
@@ -1247,7 +1262,9 @@ class Database:
             cutoff_timestamp = '0'
         notifications = []
         for row in self.db.execute(
-                'select type, message, user_id, timestamp from notification where timestamp > ? and user_id != ? order by timestamp desc limit ?', (cutoff_timestamp, user_id, limit)):
+                '''select type, message, user_id, timestamp
+                from notification where timestamp > ? and user_id != ? order by timestamp desc limit ?''',
+                (cutoff_timestamp, user_id, limit)):
             notifications.append({
                 'type': row[0],
                 'message': row[1],
@@ -1282,15 +1299,13 @@ class Database:
     def fetch_chat_pages(self, limit=500, limit_in_seconds=48*60*60):
         time_cutoff = time.time() - limit_in_seconds
         pagename_cutoff = 'chat:{}'.format(str(time_cutoff).replace('.', '_'))
-        pages = []
-        for row in self.db.execute(
-                '''select name, content, last_modified_timestamp, last_modified_by_user_id 
-                from page where name >= ? and name like ? order by name desc limit ?''',
-                (pagename_cutoff, 'chat:%', limit)):
-            p = Page(row[0], row[1])
-            p.last_modified_timestamp = row[2]
-            p.last_modified_by_user_id = row[3]
-            pages.append(p)
+        pages = [
+            self._page_from_db_row(row)
+            for row in self.db.execute(
+                    '''select name, title, content, comments_json,
+                    last_modified_timestamp, last_modified_by_user_id 
+                    from page where name >= ? and name like ? order by name desc limit ?''',
+                    (pagename_cutoff, 'chat:%', limit))]
         self._load_usernames_for_pages(pages, include_profiles=True)
         return pages
 
@@ -1299,18 +1314,24 @@ class Database:
         is_valid_pagename = bool(re.match(r'^chat:\d+_\d+$', pagename)) and len(pagename) < 100
         if is_valid_pagename:
             self.db.execute('delete from page where name = ?', (pagename,))
-        # TODO: also delete from FTS index
+            self.db.execute('delete from page_fts where name = ?', (pagename,))
 
     def fetch_calendar_pages_in_month(self, month, year):
         pattern = 'calendar:%_{}_{:04d}'.format(
             calendar.month_name[month].lower(), year)
-        # NOTE: We only use the name and content for the calendar display;
-        # don't need to bother with last_modified_*
-        pages = []
-        for row in self.db.execute('select name, content from page where name like ?', (pattern,)):
-            p = Page(row[0], row[1])
-            pages.append(p)
-        return pages
+        return [
+            self._page_from_db_row(row)
+            for row in self.db.execute(
+                    '''select name, title, content, comments_json,
+                    last_modified_timestamp, last_modified_by_user_id
+                    from page where name like ?''', (pattern,))]
+
+    def _page_from_db_row(self, row):
+        p = Page(row[0], row[2], row[1])
+        p.set_comments_json(row[3])
+        p.last_modified_timestamp = row[4]
+        p.last_modified_by_user_id = row[5]
+        return p
 
     def fetch_recent_events(self, limit=20, skip=0):
         events = []
