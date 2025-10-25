@@ -322,8 +322,6 @@ div.journal_month_year_header {
 }
 div.journal_entry {
     width: auto;
-    float: left;
-    clear: left;
     margin-bottom: 0.5em;
 }
 div.journal_entry_summary {
