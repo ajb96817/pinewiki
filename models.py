@@ -187,6 +187,13 @@ class User(UserMixin):
         else:
             self.profile = json.loads(profile_json)
 
+    def chat_tint_color(self):
+        color = self.profile['chat_color']
+        if color and color in ChatroomHelper.COLORS:
+            return ChatroomHelper.COLOR_TINTS[ChatroomHelper.COLORS.index(color)]
+        else:
+            return '#fff'
+
     def email_throttle_minutes_left(self):
         profile = self.profile
         if profile.get('email_throttle_enabled', False):
@@ -780,6 +787,7 @@ class ChatroomHelper:
         return dt_local.strftime('%d-%b-%Y %I:%M:%S %p')
     
     COLORS = ['#fdd', '#ddf', '#dfd', '#ffd', '#fdf', '#dff']
+    COLOR_TINTS = ['#fff8f8', '#f8f8ff', '#f8fff8', '#fff8ff', '#f8ffff']
     COLORNAMES = ['red', 'blue', 'green', 'yellow', 'pink', 'cyan']
         
     def post_new_chat(self, content, user_id):

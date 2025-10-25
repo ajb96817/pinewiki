@@ -2,7 +2,7 @@
 {% if loop.index0 > 0 and chat_pages[loop.index0-1].last_modified_date() != page.last_modified_date() %}
 <div class="chat_date_separator">{{page.formatted_last_modified_date()}}</div>
 {% endif %}
-<div class="chat_post">
+<div class="chat_post" style="background-color: {{page.user.chat_tint_color()}};">
   {% if page.user %}
   {% set chat_color = page.user.profile['chat_color'] %}
   {% else %}
