@@ -269,6 +269,8 @@ class Event:
             return self._formatted_page_event_description()
         elif self.event_type in ['rename_page']:
             return self._formatted_page_rename_event_description()
+        elif self.event_type in ['add_comment', 'delete_comment']:
+            return self._formatted_comment_event_description()
         elif self.event_type in ['create_file', 'delete_file', 'move_file']:
             return self._formatted_file_event_description()
         elif self.event_type in ['create_folder', 'delete_folder']:
@@ -296,6 +298,17 @@ class Event:
             url_for('view_page', pagename=self.event_target_2),
             self.event_target_2,
             self.username)
+
+    def _formatted_comment_event_description(self):
+        if self.event_type == 'delete_comment':
+            action = 'deleted a comment from'
+        else:
+            action = 'commented on'
+        return ' <strong>{}</strong> {} <strong><a href="{}">{}</a></strong>'.format(
+            self.username,
+            action,
+            url_for('view_page', pagename=self.event_target),
+            self.event_target)
 
     def _formatted_file_event_description(self):
         new_path = '/'.join(self.event_target_2.split('/')[:-1])
@@ -389,6 +402,9 @@ def send_email_notificiations(notification_type, message, user_id):
 class SiteHelper:
     def sitename(self):
         return site_config.sitename
+
+    def logo_html(self):
+        return site_config.logo_html
 
     def extra_css_url(self):
         if site_config.extra_css:
@@ -504,6 +520,10 @@ class Page:
     def is_empty(self):
         return self.content.strip() == ''
 
+    def content_byte_size(self):
+        return (len(self.content) +
+                sum(len(comment.content) for comment in self.comments))
+
     # Remove content and comments.  If the page is then "saved" to the database with
     # database.update_page(), it will be deleted.
     def clear(self):
@@ -593,14 +613,14 @@ class Page:
             self, comment_id, author_user.username,
             timestamp_string, content)
         self.comments.append(comment)
-        g.database.update_page(self)
+        g.database.update_page(self, 'add_comment')
         g.database.create_page_add_comment_notification(self, author_user)
         return comment
 
     def delete_comment(self, comment, deleting_user):
         if comment in self.comments:
             self.comments.remove(comment)
-            g.database.update_page(self)
+            g.database.update_page(self, 'delete_comment')
             g.database.create_page_delete_comment_notification(self, deleting_user)
             return True
         else:
@@ -1289,30 +1309,39 @@ class Database:
         pages.sort(key=lambda p: page_order_map[p.name])
         return pages
 
-    def update_page(self, page):
+    # event_type:
+    #   'edit_page' - normal page update/creation/deletion (i.e. page.content changed)
+    #   'add_comment', 'delete_comment' - comment was added to or deleted from the page
+    def update_page(self, page, event_type='edit_page'):
         old_page = self.fetch_page(page.name)
         if old_page:
             if page.is_empty():
-                # old page is being deleted
+                # Old page is being deleted.
                 self.record_event(
-                    event_type='delete_page', event_target=page.name,
-                    user_id=page.last_modified_by_user_id, content=old_page.content,
-                    bytes_changed=-len(old_page.content))
+                    event_type='delete_page',
+                    event_target=page.name,
+                    user_id=page.last_modified_by_user_id,
+                    content=old_page.content,
+                    bytes_changed=-old_page.content_byte_size())
                 self.db.execute('delete from page where name = ?', (page.name,))
                 self.db.execute('delete from page_fts where name = ?', (page.name,))
             else:
-                # old page is being replaced
+                # Existing page content/title/comments are being changed.
+                bytes_changed = page.content_byte_size() - old_page.content_byte_size()
                 self.record_event(
-                    event_type='edit_page', event_target=page.name,
-                    user_id=page.last_modified_by_user_id, content=old_page.content,
-                    bytes_changed=len(page.content)-len(old_page.content))
+                    event_type=event_type,
+                    event_target=page.name,
+                    user_id=page.last_modified_by_user_id,
+                    content=old_page.content,
+                    bytes_changed=bytes_changed)
                 self.db.execute(
                     '''update page set content = ?, title = ?, comments_json = ?,
                     last_modified_timestamp = datetime('now'), last_modified_by_user_id = ? where name = ?''',
                     (page.content, page.title, page.comments_as_json_string(),
                      page.last_modified_by_user_id, page.name))
                 self.db.execute(
-                    'update page_fts set content = ? where name = ?', (page.content, page.name))
+                    'update page_fts set content = ? where name = ?',
+                    (page.content, page.name))
         else:
             if page.is_empty():
                 # 'new' empty page is being 'created' - ignore
@@ -1320,16 +1349,19 @@ class Database:
             else:
                 # new page is being created
                 self.record_event(
-                    event_type='create_page', event_target=page.name,
-                    user_id=page.last_modified_by_user_id, content=page.content,
-                    bytes_changed=len(page.content))
+                    event_type='create_page',
+                    event_target=page.name,
+                    user_id=page.last_modified_by_user_id,
+                    content=page.content,
+                    bytes_changed=page.content_byte_size())
                 self.db.execute(
                     '''insert into page (name, content, title, comments_json,
                     last_modified_timestamp, last_modified_by_user_id) values (?, ?, ?, ?, datetime('now'), ?)''',
                     (page.name, page.content, page.title, page.comments_as_json_string(),
                      page.last_modified_by_user_id))
                 self.db.execute(
-                    'insert into page_fts (name, content) values (?, ?)', (page.name, page.content))
+                    'insert or replace into page_fts (name, content) values (?, ?)',
+                    (page.name, page.content))
 
     def rename_page(self, page, new_pagename):
         # Not yet implemented
@@ -1338,7 +1370,8 @@ class Database:
     def fulltext_search(self, query, limit=20, offset=0):
         results = []
         for row in self.db.execute(
-                'select name, snippet(page_fts, 1, ?, ?, ?, 20) from page_fts where content match ? order by bm25(page_fts) limit ?,?',
+                '''select name, snippet(page_fts, 1, ?, ?, ?, 20)
+                from page_fts where content match ? order by bm25(page_fts) limit ?,?''',
                 ('', '', '...', query, offset, limit)):
             results.append({
                 'pagename': row[0],
@@ -1488,7 +1521,7 @@ class Database:
         events = []
         for row in self.db.execute(
                 '''select id, event_type, event_target, event_target_2, bytes_changed, user_id, timestamp
-                from event where event_target = ? and event_type in ('create_page','edit_page','delete_page','rename_page')
+                from event where event_target = ? and event_type in ('create_page','edit_page','delete_page','rename_page','add_comment','delete_comment')
                 order by timestamp desc limit ?,?''', (pagename, skip, limit)):
             event = Event()
             event.id = row[0]

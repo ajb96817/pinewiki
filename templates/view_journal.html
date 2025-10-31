@@ -78,6 +78,13 @@
         &ndash;
         <span class="journal_entry_title">{{page.title}}</span>
         {% endif %}
+        {% if page.comments %}
+        &ndash;
+        <span class="journal_entry_comments_count">
+          {{page.comments | length}}
+          comment{{'' if (page.comments | length) == 1 else 's'}}
+        </span>
+        {% endif %}
       </div>
       <div class="journal_entry_content">
         {{page.content_as_markdown()|safe}}

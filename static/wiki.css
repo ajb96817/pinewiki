@@ -14,8 +14,7 @@ h1, h2, h3, h4, h5, h6 {
     line-height: 1.2;
     clear: both;
     padding: 0.1em 0.75em;
-    border-bottom: 1px solid #ccc;
-    border-top: 1px solid #ccc;
+    border-bottom: 2px solid #ddd;
 }
 h1 { font-size: 2em; margin: 0 0 0.444em; }
 h1.login { border: none; padding: 0; }
@@ -33,6 +32,9 @@ div.notice { color: #090; font-weight: bold; }
 div.error { color: #900; font-weight: bold; }
 
 form.login fieldset { width: auto; float: left; }
+
+#sitelogo { float: left; color: #88f; font-size: 150%; }
+
 #tools { text-align: right; }
 #tools div.toolbar { margin: 0.3em 0; }
 #tools div.toolbar a.current { font-weight: bold; }
@@ -323,13 +325,8 @@ div.journal_month_year_header {
     margin-bottom: 0.5em;
     margin-top: 1em;
 }
-div.journal_entry {
-    width: auto;
-    margin-bottom: 0.5em;
-}
-div.journal_entry_summary {
-    margin-bottom: 0.2em;
-}
+div.journal_entry { width: auto; margin-bottom: 0.5em; }
+div.journal_entry_summary { margin-bottom: 0.2em; }
 .journal_entry_timestamp {
     cursor: pointer;
     color: #66f;
@@ -337,6 +334,7 @@ div.journal_entry_summary {
     border-bottom: 2px solid #ddf;
 }
 span.journal_entry_title {}
+span.journal_entry_comments_count { font-style: italic; color: #888; }
 div.journal_entry_content { display: none; }
 div.journal_entry span.collapser { cursor: pointer; }
 div.journal_entry span.collapser::before { content: "\25B6"; }
@@ -348,21 +346,14 @@ ul.journal_entry_comments {
   font-size: 90%;
   color: #444;
 }
-li.journal_entry_comment {
-  margin-bottom: 1em;
-}
-li.journal_entry_comment div.byline {
-}
-div.comment_content_prompt {
-  color: #444;
-}
+li.journal_entry_comment { margin-bottom: 1em; }
+li.journal_entry_comment div.byline {}
+div.comment_content_prompt { color: #444; }
 div.journal_entry_comment_content {
   color: #777;
   font-style: italic;
 }
-div.journal_entry_comment_content p {
-  margin: 0.25em 0;
-}
+div.journal_entry_comment_content p { margin: 0.25em 0; }
 form.journal_comment_area {
   display: none;
   margin-bottom: 1em;

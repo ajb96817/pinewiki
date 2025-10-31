@@ -18,6 +18,8 @@ site_config = SiteConfig({
 
   'root_dir': '/var/www/pinewiki',
 
+  'logo_html': None,
+
   # TODO: 'favicon'
 
   # Optional "theme" CSS file, in addition to the base wiki.css
