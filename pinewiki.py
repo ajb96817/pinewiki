@@ -143,7 +143,7 @@ def edit_page(pagename):
             return redirect(url_for('view_current_user_journal'))
         else:
             return redirect(url_for('view_page', pagename=page.name))
-    
+
 @app.route('/changes', methods=['GET'])
 @login_required
 def recent_changes():
@@ -287,7 +287,6 @@ def delete_chat_item(pagename):
     g.database.delete_chat_page(pagename)  # NOTE: this handles validation of pagename itself
     return redirect(url_for('view_chat'))
 
-
 @app.route('/journal', methods=['GET'])
 @login_required
 def view_current_user_journal():
@@ -337,6 +336,7 @@ def view_journal(username, year, month):
     entry_summary, pagenames = helper.build_entry_summary(journal_user, year, month, 50)
     journal_pages = g.database.fetch_pages(pagenames)
     current_timestamp_string = now_local.strftime('%d-%b-%Y at %-I:%M') + now_local.strftime('%p').lower()
+    expanded_entry_pagename = request.args.get('expand')  # optional: this journal entry will be displayed initially expanded
     return render_template(
         'view_journal.html',
         toolbar_selection='journal',
@@ -352,6 +352,7 @@ def view_journal(username, year, month):
         current_timestamp_string=current_timestamp_string,
         selected_year=year,
         selected_month=month,
+        expanded_entry_pagename=expanded_entry_pagename,
         calendar=calendar)
 
 @app.route('/journal', methods=['POST'])
@@ -388,11 +389,52 @@ def post_journal_entry():
         year=entry_timestamp.year,
         month=entry_timestamp.month))
     
+@app.route('/journal/delete/<pagename>')
+@login_required
+def delete_journal_entry(pagename):
+    page = g.database.fetch_page(pagename)
+    if page and page.is_journal_page() and page.journal_page_info()['username'] == current_user.username:
+        page.clear()
+        g.database.update_page(page)
+    return redirect(url_for('view_page', pagename=pagename))
+
 @app.route('/change_journal_timestamp/<pagename>', methods=['GET', 'POST'])
 @login_required
 def change_journal_timestamp(pagename):
     return 'not yet implemented'
 
+@app.route('/add_journal_comment/<pagename>', methods=['POST'])
+@login_required
+def add_journal_comment(pagename):
+    page = g.database.fetch_page(pagename)
+    if page:
+        content = (request.form['comment_content'] or '').strip()
+        if content:
+            comment = page.add_comment(current_user, content)
+        if page.is_journal_page():
+            return redirect(page.journal_page_url(
+                expanded_entry_pagename=page.name))
+        else:
+            return redirect(url_for('view_page', pagename=page.name))
+    else:
+        return redirect(url_for('view_page', pagename=pagename))
+
+# TODO: only allow deletion if current user is the comment author or the journal entry author
+@app.route('/delete_journal_comment/<pagename>/<comment_id>', methods=['GET'])
+@login_required
+def delete_journal_comment(pagename, comment_id):
+    page = g.database.fetch_page(pagename)
+    if page:
+        comment = page.comment_with_id(comment_id)
+        if comment and comment.is_editable_by_user(current_user):
+            page.delete_comment(comment, current_user)
+        if page.is_journal_page():
+            return redirect(page.journal_page_url(
+                expanded_entry_pagename=page.name))
+        return redirect(url_for('view_page', pagename=page.name))
+    else:
+        return redirect(url_for('view_page', pagename=pagename))
+        
 
 @app.route('/check_in', methods=['GET'])
 @login_required

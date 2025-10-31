@@ -7,7 +7,8 @@
     <span class="pagename">{{pagename}}</span>
   </div>
   <div class="page_content content_box" style="overflow: auto;">
-    <div id="journal_navigation" class="journal_navigation">
+    <div id="journal_navigation" class="journal_navigation"
+         style="background-color: {{journal_user.chat_tint_color()}};">
       <div class="journal_user_selector">
         <form action="{{url_for('switch_journal_user')}}" id="journal_user_selector_form" method="get">
           <div class="current_journal_user"><strong>{{journal_user.username}}</strong>'s journal</div>
@@ -71,12 +72,12 @@
     <div class="journal_month_year_header">{{calendar.month_name[header_ns.month]}} {{header_ns.year}}</div>
     {% endif %}
     <div id="journal_entry_{{loop.index}}"
-         class="journal_entry{% if loop.first %} expanded{% endif %}">
+         class="journal_entry{% if loop.first or expanded_entry_pagename == page.name %} expanded{% endif %}">
       <div class="journal_entry_summary">
         <span class="collapser"
               onclick="toggle_journal_entry('journal_entry_{{loop.index}}');return false;"></span>
-        <a href="{{url_for('edit_page', pagename=page.name)}}"
-           class="journal_entry_timestamp">{{helper.formatted_time_from_journal_pagename(page.name, True)}}</a>
+        <span class="journal_entry_timestamp"
+              onclick="toggle_journal_entry('journal_entry_{{loop.index}}');return false;">{{helper.formatted_time_from_journal_pagename(page.name, True)}}</span>
         {% if page.title %}
         &ndash;
         <span class="journal_entry_title">{{page.title}}</span>
@@ -84,6 +85,55 @@
       </div>
       <div class="journal_entry_content">
         {{page.content_as_markdown()|safe}}
+        {% if page.comments %}
+        <ul class="journal_entry_comments">
+          {% for comment in page.comments %}
+          <li class="journal_entry_comment">
+            <div class="byline">
+              <strong>{{comment.author_username}}</strong>
+              commented at {{comment.formatted_timestamp()}}:
+            </div>
+            <div class="journal_entry_comment_content">
+              {{comment.content_as_markdown()|safe}}
+            </div>
+            {% if comment.is_editable_by_user(current_user) %}
+            <div class="journal_entry_comment_commands">
+              <a
+                href="{{url_for('delete_journal_comment', pagename=page.name, comment_id=comment.comment_id)}}"
+                onclick="return confirm('Really delete this comment?');">
+                Delete Comment
+              </a>
+            </div>
+            {% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+        </ul>
+        {% endif %}
+        
+        <div class="journal_entry_commands"
+             id="journal_entry_commands_{{loop.index}}">
+          {% if is_own_journal %}
+          <a href="{{url_for('edit_page', pagename=page.name)}}">Edit Entry</a> &ndash;
+          <a
+            href="{{url_for('delete_journal_entry', pagename=page.name)}}"
+            onclick="return confirm('Really delete this journal entry?');">
+            Delete Entry
+          </a> &ndash;
+          {% endif %}
+          <a href="#" onclick="expand_or_collapse_journal_comment_area('journal_entry_{{loop.index}}_comment_area', 'journal_entry_commands_{{loop.index}}', true);return false;">Add Comment</a>
+        </div>
+        <form class="journal_comment_area"
+              id="journal_entry_{{loop.index}}_comment_area"
+              method="post" accept-charset="utf-8"
+              action="{{url_for('add_journal_comment', pagename=page.name)}}">
+          <textarea name="comment_content" autofocus></textarea>
+          <div>
+            <button type="submit" name="action" value="add_comment">Add Comment</button>
+            <button type="submit" name="action" value="cancel"
+                    onclick="expand_or_collapse_journal_comment_area('journal_entry_{{loop.index}}_comment_area', 'journal_entry_commands_{{loop.index}}', false);return false;">Cancel</button>
+          </div>
+        </form>
       </div>
     </div>
     {% endfor %}

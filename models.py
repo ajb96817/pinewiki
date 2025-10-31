@@ -7,6 +7,7 @@ import sqlite3
 import redis
 import os
 import sys
+import uuid
 import calendar
 import time
 import datetime
@@ -484,11 +485,18 @@ class Page:
         self.title = title
         self.comments = []
 
-    def set_comments_json(self, comments_json):
-        self.comments = json.loads(comments_json) if comments_json else []
+    # TODO: move to a method of Database
+    def comments_as_json_string(self):
+        if self.comments:
+            return json.dumps(
+                [comment.as_json() for comment in self.comments])
+        else:
+            return None
 
-    def comments_as_json(self):
-        return json.dumps(self.comments) if self.comments else None
+    def comment_with_id(self, comment_id):
+        return next(
+            (comment for comment in self.comments
+             if comment.comment_id == comment_id), None)
 
     def has_encryption(self):
         return '<ENCRYPTED' in self.content
@@ -496,11 +504,31 @@ class Page:
     def is_empty(self):
         return self.content.strip() == ''
 
+    # Remove content and comments.  If the page is then "saved" to the database with
+    # database.update_page(), it will be deleted.
+    def clear(self):
+        self.content = ''
+        self.comments = []
+
     def journal_page_info(self):
         return JournalHelper.parse_journal_pagename(self.name)
 
     def is_journal_page(self):
         return self.journal_page_info() != None
+
+    # URL for the monthly journal containing this page
+    # (self.is_journal_page() has to be true).
+    # If expanded_entry_pagename is given, the journal screen will show the
+    # given journal page initially expanded (note that the first page is
+    # always shown initially expanded regardless).
+    def journal_page_url(self, expanded_entry_pagename=None):
+        page_info = self.journal_page_info()
+        return url_for(
+            'view_journal',
+            username=page_info['username'],
+            year=page_info['year'],
+            month=page_info['month_index'],
+            expand=expanded_entry_pagename)
 
     # Returns a list of (parent_page_name, label, is_last)
     def breadcrumbs(self):
@@ -557,7 +585,75 @@ class Page:
 
     def last_modified_date(self):
         return g.database.db_timestamp_to_date(self.last_modified_timestamp)
+
+    def add_comment(self, author_user, content):
+        comment_id = str(uuid.uuid4()).replace('-', '')
+        timestamp_string = str(time.time())
+        comment = PageComment(
+            self, comment_id, author_user.username,
+            timestamp_string, content)
+        self.comments.append(comment)
+        g.database.update_page(self)
+        g.database.create_page_add_comment_notification(self, author_user)
+        return comment
+
+    def delete_comment(self, comment, deleting_user):
+        if comment in self.comments:
+            self.comments.remove(comment)
+            g.database.update_page(self)
+            g.database.create_page_delete_comment_notification(self, deleting_user)
+            return True
+        else:
+            return False
+
         
+# TODO: timestamp code is duplicated in ChatroomHelper
+class PageComment:
+    @staticmethod
+    def from_json(json, page):
+        return PageComment(
+            page,
+            json['comment_id'], json['author_username'],
+            json['timestamp_string'], json['content'])
+    
+    def __init__(self, page, comment_id, author_username, timestamp_string, content):
+        self.page = page  # NOTE: creates cyclic reference, should try to fix
+        self.comment_id = comment_id  # UUID string, without dashes
+        self.author_username = author_username
+        self.timestamp_string = timestamp_string
+        self.content = content
+
+    def as_json(self):
+        return {
+            'comment_id': self.comment_id,
+            'author_username': self.author_username,
+            'timestamp_string': self.timestamp_string,
+            'content': self.content
+        }
+
+    # Comments are considered editable/deletable by a user if they were authored
+    # by that user, or else are attached to a journal page owned by that user.
+    def is_editable_by_user(self, user):
+        if self.author_username == user.username:
+            return True
+        journal_page_info = self.page.journal_page_info()
+        if journal_page_info != None:
+            return journal_page_info['username'] == user.username
+        return False
+
+    def formatted_timestamp(self):
+        t = float(self.timestamp_string)
+        dt_utc = datetime.datetime.fromtimestamp(t, tz=dateutil.tz.tzutc())
+        dt_local = dt_utc.astimezone(dateutil.tz.tzlocal())
+        return dt_local.strftime('%d-%b-%Y %I:%M:%S %p')
+
+    # NOTE: This is a stripped-down version of normal page Markdown rendering.
+    # No wikilinks, tables, code formatting, etc.
+    def content_as_markdown(self):
+        return markdown.markdown(
+            self.content,
+            extensions=['nl2br'])
+            
 
 class FileHelper:
     def __init__(self):
@@ -1196,7 +1292,7 @@ class Database:
                 self.db.execute(
                     '''update page set content = ?, title = ?, comments_json = ?,
                     last_modified_timestamp = datetime('now'), last_modified_by_user_id = ? where name = ?''',
-                    (page.content, page.title, page.comments_as_json(),
+                    (page.content, page.title, page.comments_as_json_string(),
                      page.last_modified_by_user_id, page.name))
                 self.db.execute(
                     'update page_fts set content = ? where name = ?', (page.content, page.name))
@@ -1213,7 +1309,7 @@ class Database:
                 self.db.execute(
                     '''insert into page (name, content, title, comments_json,
                     last_modified_timestamp, last_modified_by_user_id) values (?, ?, ?, ?, datetime('now'), ?)''',
-                    (page.name, page.content, page.title, page.comments_as_json(),
+                    (page.name, page.content, page.title, page.comments_as_json_string(),
                      page.last_modified_by_user_id))
                 self.db.execute(
                     'insert into page_fts (name, content) values (?, ?)', (page.name, page.content))
@@ -1243,7 +1339,8 @@ class Database:
     def create_notification(self, notification_type, message, user_id):
         self.db.cursor()
         self.db.execute(
-            '''insert into notification (type, message, user_id, timestamp) values (?, ?, ?, datetime('now'))''',
+            '''insert into notification (type, message, user_id, timestamp)
+            values (?, ?, ?, datetime('now'))''',
             (notification_type, message, user_id))
         # prune old notifications
         self.db.execute('''delete from notification where timestamp < datetime('now', '-1 month')''')
@@ -1263,6 +1360,14 @@ class Database:
         else:
             message = '{} edited {}'.format(user.username, pagename)
         self.create_notification('page', message, user.user_id)
+
+    def create_page_add_comment_notification(self, page, user):
+        message = '{} commented on {}'.format(user.username, page.name)
+        self.create_notification('add_comment', message, user.user_id)
+
+    def create_page_delete_comment_notification(self, page, user):
+        message = '{} deleted a comment on {}'.format(user.username, page.name)
+        self.create_notification('delete_comment', message, user.user_id)
 
     # NOTE: notifications with user_id matching the one provided are ignored.
     def fetch_notifications(self, user_id, cutoff_timestamp=None, limit=10):
@@ -1336,7 +1441,11 @@ class Database:
 
     def _page_from_db_row(self, row):
         p = Page(row[0], row[2], row[1])
-        p.set_comments_json(row[3])
+        if row[3]:
+            comments_json = json.loads(row[3])
+            p.comments = [
+                PageComment.from_json(comment_json, p)
+                for comment_json in json.loads(row[3])]
         p.last_modified_timestamp = row[4]
         p.last_modified_by_user_id = row[5]
         return p

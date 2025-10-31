@@ -13,7 +13,6 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: bold;
     line-height: 1.2;
     clear: both;
-    background-color: #eee;
     padding: 0.1em 0.75em;
     border-bottom: 1px solid #ccc;
     border-top: 1px solid #ccc;
@@ -112,7 +111,8 @@ div.pagination { padding: 0.5em 2em; }
 form.edit_page textarea,
 form.post_chat textarea,
 form.post_journal_entry textarea,
-form.post_journal_entry input {
+form.post_journal_entry input,
+form.journal_comment_area textarea {
     border: 1px solid #aaa;
     background-color: #f8f8f8;
     padding: 0.2em 0.5em;
@@ -238,7 +238,6 @@ div.folder_list ul { list-style-type: none; }
 h2.monthname {
     clear: both;
     border: none;
-    background-color: inherit;
     font-weight: normal;
     text-align: center;
     padding-top: 1em;
@@ -293,7 +292,7 @@ div.journal_navigation {
     margin-bottom: 0.5em;
     height: 100%;
     border: 2px solid #ddd;
-    background-color: #eee;
+    /* background-color: #eee; */
     box-shadow: 0 0 0.4em #ccc;
 }
 div.journal_navigation div.current_journal_user { margin-bottom: 0.25em; }
@@ -329,17 +328,39 @@ div.journal_entry_summary {
 }
 .journal_entry_timestamp {
     cursor: pointer;
-    color: #44f;
+    color: #66f;
     font-weight: bold;
-    border-bottom: 2px solid #ddd;
+    border-bottom: 2px solid #ddf;
 }
 span.journal_entry_title {}
 div.journal_entry_content { display: none; }
 div.journal_entry span.collapser { cursor: pointer; }
-div.journal_entry span.collapser:before { content: "\25B6"; }
-div.journal_entry.expanded span.collapser:before { content: "\25BC"; }
+div.journal_entry span.collapser::before { content: "\25B6"; }
+div.journal_entry.expanded span.collapser::before { content: "\25BC"; }
 div.journal_entry.expanded div.journal_entry_content { display: block; }
-
+div.journal_entry_commands { margin-bottom: 1em; margin-left: 1.5em; }
+ul.journal_entry_comments {
+  margin-left: 1em;
+  font-size: 90%;
+  color: #444;
+}
+li.journal_entry_comment {
+  margin-bottom: 1em;
+}
+li.journal_entry_comment div.byline {
+}
+div.journal_entry_comment_content {
+  color: #777;
+  font-style: italic;
+}
+div.journal_entry_comment_content p {
+  margin: 0.25em 0;
+}
+form.journal_comment_area { display: none; margin-bottom: 1em; }
+form.journal_comment_area textarea {
+  width: 25em;
+  height: 4em;
+}
 
 div.sitemap { padding: 1em 2em; }
 table.sitemap th {
