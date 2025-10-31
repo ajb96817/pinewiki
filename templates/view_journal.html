@@ -42,21 +42,11 @@
         <div class="journal_new_entry_field_label">Entry text:</div>
 	<textarea id="entry_content_textarea" name="entry_content"></textarea>
         <div class="post_journal_entry_controls">
-          <div class="post_journal_entry_controls_row">
-            <button type="submit" name="action" value="save_with_system_time">Post using current server time</button>
-          </div>
-          <div class="post_journal_entry_controls_row">
-	    <button type="submit" name="action" value="save_with_custom_time" accesskey="s">Post using custom timestamp:</button>
-            <input type="text" name="entry_timestamp" value="{{current_timestamp_string}}"></input>
-          </div>
+          <button type="submit" name="action" value="save_with_system_time">Post journal entry</button>
+	  <button type="submit" name="action" value="cancel" accesskey="c" onclick="disable_journal_entry();return false;">Cancel post</button>
           {% if False %}
-          <div class="post_journal_entry_controls_row">
-            <button type="submit" name="action" value="preview" accesskey="p">Preview post</button>
-          </div>
+          <button type="submit" name="action" value="preview" accesskey="p">Preview post</button>
           {% endif %}
-          <div class="post_journal_entry_controls_row">
-	    <button type="submit" name="action" value="cancel" accesskey="c" onclick="disable_journal_entry();return false;">Cancel post</button>
-          </div>
         </div>
       </form>
     </div>

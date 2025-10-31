@@ -311,7 +311,7 @@ form.post_journal_entry input {
 div.journal_new_entry_area textarea { width: 95%; height: 10em; }
 div.journal_new_entry_area button { font-size: 110%; }
 div.journal_new_entry_area input { font-size: 110%; font-family: monospace; width: 20em; }
-div.post_journal_entry_controls_row { margin: 0.2em 0; }
+div.post_journal_entry_controls { margin: 0.5em 0; }
 
 div.journal_month_year_header {
     font-size: 150%;
