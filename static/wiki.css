@@ -349,6 +349,9 @@ li.journal_entry_comment {
 }
 li.journal_entry_comment div.byline {
 }
+div.comment_content_prompt {
+  color: #444;
+}
 div.journal_entry_comment_content {
   color: #777;
   font-style: italic;
@@ -356,10 +359,15 @@ div.journal_entry_comment_content {
 div.journal_entry_comment_content p {
   margin: 0.25em 0;
 }
-form.journal_comment_area { display: none; margin-bottom: 1em; }
+form.journal_comment_area {
+  display: none;
+  margin-bottom: 1em;
+  margin-left: 1.5em; 
+}
 form.journal_comment_area textarea {
   width: 25em;
   height: 4em;
+  margin: 0.2em 0;
 }
 
 div.sitemap { padding: 1em 2em; }

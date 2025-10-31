@@ -111,17 +111,19 @@
             Delete Entry
           </a> &ndash;
           {% endif %}
-          <a href="#" onclick="expand_or_collapse_journal_comment_area('journal_entry_{{loop.index}}_comment_area', 'journal_entry_commands_{{loop.index}}', true);return false;">Add Comment</a>
+          <a href="#" onclick="expand_or_collapse_journal_comment_area('journal_entry_{{loop.index}}_comment_area', 'journal_entry_commands_{{loop.index}}', 'comment_textarea_{{loop.index}}', true);return false;">Add Comment</a>
         </div>
         <form class="journal_comment_area"
               id="journal_entry_{{loop.index}}_comment_area"
               method="post" accept-charset="utf-8"
               action="{{url_for('add_journal_comment', pagename=page.name)}}">
-          <textarea name="comment_content" autofocus></textarea>
+          <div class="comment_content_prompt">Enter your comment:</div>
+          <textarea name="comment_content"
+                    id="comment_textarea_{{loop.index}}"></textarea>
           <div>
             <button type="submit" name="action" value="add_comment">Add Comment</button>
             <button type="submit" name="action" value="cancel"
-                    onclick="expand_or_collapse_journal_comment_area('journal_entry_{{loop.index}}_comment_area', 'journal_entry_commands_{{loop.index}}', false);return false;">Cancel</button>
+                    onclick="expand_or_collapse_journal_comment_area('journal_entry_{{loop.index}}_comment_area', 'journal_entry_commands_{{loop.index}}', 'comment_textarea_{{loop.index}}', false);return false;">Cancel</button>
           </div>
         </form>
       </div>
