@@ -35,12 +35,18 @@
     <div class="journal_new_entry_area">
       <button id="new_entry_button" value="post" onclick="enable_journal_entry();return false;" >Post a new journal entry</button>
       <form class="post_journal_entry"
-            action="{{url_for('post_journal_entry')}}" id="new_entry_form"
-            style="display: none;" method="post" accept-charset="utf-8">
+            id="new_entry_form"
+            action="{{url_for('post_journal_entry')}}"
+            style="display: none;"
+            method="post"
+            accept-charset="utf-8"
+            enctype="multipart/form-data">
         <div class="journal_new_entry_field_label">Journal entry title (optional):</div>
-        <input type="text" name="entry_title" value="" autofocus></input>
+        <input type="text" class="textfield" name="entry_title" value=""></input>
         <div class="journal_new_entry_field_label">Entry text:</div>
-	<textarea id="entry_content_textarea" name="entry_content"></textarea>
+	<textarea id="entry_content_textarea" name="entry_content" class="textfield"></textarea>
+        <div class="journal_new_entry_field_label">Attachment(s):</div>
+        <input type="file" name="file" multiple />
         <div class="post_journal_entry_controls">
           <button type="submit" name="action" value="save_with_system_time">Post journal entry</button>
 	  <button type="submit" name="action" value="cancel" accesskey="c" onclick="disable_journal_entry();return false;">Cancel post</button>
@@ -119,6 +125,7 @@
               action="{{url_for('add_journal_comment', pagename=page.name)}}">
           <div class="comment_content_prompt">Enter your comment:</div>
           <textarea name="comment_content"
+                    class="textfield"
                     id="comment_textarea_{{loop.index}}"></textarea>
           <div>
             <button type="submit" name="action" value="add_comment">Add Comment</button>

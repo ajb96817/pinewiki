@@ -110,8 +110,7 @@ div.pagination { padding: 0.5em 2em; }
 
 form.edit_page textarea,
 form.post_chat textarea,
-form.post_journal_entry textarea,
-form.post_journal_entry input,
+form.post_journal_entry .textfield
 form.journal_comment_area textarea {
     border: 1px solid #aaa;
     background-color: #f8f8f8;
@@ -302,8 +301,13 @@ div.journal_new_entry_field_label {
   margin-top: 0.5em;
   margin-bottom: 0.25em;
 }
-form.post_journal_entry textarea,
-form.post_journal_entry input {
+form.post_journal_entry .textfield,
+div.journal_entry_content textarea {
+  /* TODO: these duplicate rules above (form.edit_page textarea, etc) */
+  border: 1px solid #aaa;
+  background-color: #f8f8f8;
+  font-size: 110%;
+  box-shadow: 0 0 0.3em #aaa inset;
   margin: 0;
   padding: 0.5em;
 }

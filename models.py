@@ -774,6 +774,23 @@ class FileHelper:
             bytes_changed=bytesize)
         return None
 
+    # Attached file ends up in 'attachments/{subdirectory}/{filename}'.
+    # The full assigned pathname is returned if successful.
+    # If there is a problem, None is returned.
+    # NOTE: This does not generate a 'create_file' event notification.
+    def save_attachment(self, uploaded_file, subdirectory):
+        sanitized_filename = self.sanitize_filename(uploaded_file.filename)
+        if sanitized_filename is None:
+            return None
+        path = '/'.join(['attachments', subdirectory])
+        if not self.validate_path(path):
+            return None
+        full_path = '/'.join([self.basedir, path])
+        os.makedirs(full_path, exist_ok=True)
+        # TODO: exception handling, return None on error
+        uploaded_file.save('/'.join([full_path, sanitized_filename]))
+        return '/'.join([path, sanitized_filename])
+
     # Returns error message if any
     # TODO: factor this logic with save_uploaded_file etc (use full_path_for_file)
     def delete_file(self, path, filename, user_id):

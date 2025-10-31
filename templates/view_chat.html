@@ -24,14 +24,19 @@
       {% if rendered_preview %}
       <div>Your message will appear as shown above.  Press Post to commit your changes.</div>
       {% else %}
-      <button value="post" onclick="document.getElementById('post_message_form').style.display='block'; document.getElementById('post_message_button').style.display='none';" id="post_message_button">Post a message</button>
+      <button value="post"
+              onclick="document.getElementById('post_message_form').style.display='block'; document.getElementById('post_message_button').style.display='none';"
+              id="post_message_button">Post a message</button>
       {% endif %}
-      <form id="post_message_form" style="display: {{'block' if rendered_preview else 'none'}};" method="post" accept-charset="utf-8" class="post_chat">
+      <form id="post_message_form"
+            class="post_chat"
+            style="display: {{'block' if rendered_preview else 'none'}};"
+            method="post" accept-charset="utf-8">
 	{% if not rendered_preview %}
 	<div>Post a message:</div>
 	{% endif %}
 	<textarea name="page_content" rows="8" cols="80" autofocus>{{chat_content}}</textarea>
-	<button type="submit" name="action" value="save" accesskey="s">Post</button>
+	<button type="submit" name="action" value="save" accesskey="s">Post message</button>
 	<button type="submit" name="action" value="preview" accesskey="v">Preview</button>
       </form>
     </div>

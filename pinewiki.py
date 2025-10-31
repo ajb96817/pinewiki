@@ -366,6 +366,7 @@ def post_journal_entry():
         title = None
     action = request.form['action']
     helper = JournalHelper()
+    file_helper = FileHelper()
     if action == 'save_with_system_time':
         save_entry = True
         entry_timestamp = current_local_timestamp()
@@ -378,6 +379,28 @@ def post_journal_entry():
     else:
         save_entry = False
     if save_entry:
+        # Save attachments if provided.
+        any_attachments = False
+        attachment_paths = []
+        for uploaded_file in request.files.getlist('file'):
+            if uploaded_file.filename:
+                subdirectory = current_user.username
+                attachment_path = file_helper.save_attachment(uploaded_file, subdirectory)
+                if attachment_path:
+                    attachment_paths.append(attachment_path)
+                else:
+                    any_failed_attachments = True
+            else:
+                any_failed_attachments = True
+        if attachment_paths:
+            # Add list of file links to the journal content.
+            attachment_links = "\n".join(
+                [f'  * {{{{{attachment_path}}}}}'
+                 for attachment_path in attachment_paths])
+            content = "\n\n".join([content, '**Attached files:**', attachment_links])
+
+        # if any_failed_attachments:
+
         helper.post_journal_entry(content, title, current_user, entry_timestamp)
         g.database.create_notification(
             'journal',
@@ -393,10 +416,18 @@ def post_journal_entry():
 @login_required
 def delete_journal_entry(pagename):
     page = g.database.fetch_page(pagename)
-    if page and page.is_journal_page() and page.journal_page_info()['username'] == current_user.username:
+    journal_page_info = page.journal_page_info() if page else None
+    if page and journal_page_info and journal_page_info['username'] == current_user.username:
         page.clear()
         g.database.update_page(page)
-    return redirect(url_for('view_page', pagename=pagename))
+    if journal_page_info:
+        return redirect(url_for(
+            'view_journal',
+            username=journal_page_info['username'],
+            year=journal_page_info['year'],
+            month=journal_page_info['month_index']))
+    else:
+        return redirect(url_for('view_page', pagename=pagename))
 
 @app.route('/change_journal_timestamp/<pagename>', methods=['GET', 'POST'])
 @login_required
