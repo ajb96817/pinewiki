@@ -170,18 +170,18 @@ div.content_box {
     box-shadow: 0 0 1em 2px #ccc;
 }
 
-table.events { margin: 1em; }
-table.events td { padding: 0.1em 1em; }
-table.events td.timestamp { white-space: nowrap; }
-table.events tr:hover { background-color: #f3f3f3; }
-table.events td.byteschanged { text-align: right; white-space: nowrap; }
-table.events td.byteschanged_zero { background-color: #ccc; }
-table.events td.byteschanged_negative { background-color: #fcc; }
-table.events tr:hover td.byteschanged_negative { background-color: #ebb; }
-table.events td.byteschanged_positive { background-color: #cfc; }
-table.events tr:hover td.byteschanged_positive { background-color: #beb; }
-table.events td.description { overflow-wrap: anywhere; }
-/*table.events td.commands { border-left: 1px solid #ccc; }*/
+table#recent_changes { margin: 1em; border: none; box-shadow: none; }
+table#recent_changes td { border: none; padding: 0.1em 1em; }
+table#recent_changes td.timestamp { white-space: nowrap; }
+table#recent_changes td.byteschanged { text-align: right; white-space: nowrap; }
+table#recent_changes td.byteschanged_zero { background-color: #ccc; }
+table#recent_changes td.byteschanged_negative { background-color: #fcc; }
+table#recent_changes td.byteschanged_positive { background-color: #cfc; }
+table#recent_changes td.description { overflow-wrap: anywhere; }
+table#recent_changes tr:hover td { background-color: #f3f3f3; }
+table#recent_changes tr:hover td.byteschanged_zero { background-color: #bbb; }
+table#recent_changes tr:hover td.byteschanged_negative { background-color: #ebb; }
+table#recent_changes tr:hover td.byteschanged_positive { background-color: #beb; }
 
 
 div.file_manager {

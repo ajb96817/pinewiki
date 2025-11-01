@@ -288,8 +288,7 @@ class Event:
         return '<strong><a href="{}">{}</a></strong> {} by <strong>{}</strong>'.format(
             url_for('view_page', pagename=self.event_target),
             self.event_target,
-            action,
-            self.username)
+            action, self.username)
 
     def _formatted_page_rename_event_description(self):
         return '<strong><a href="{}">{}</a></strong> renamed to <strong><a href="{}">{}</a></strong> by <strong>{}</strong>'.format(
@@ -301,14 +300,13 @@ class Event:
 
     def _formatted_comment_event_description(self):
         if self.event_type == 'delete_comment':
-            action = 'deleted a comment from'
+            action = 'had a comment deleted'
         else:
             action = 'commented on'
-        return ' <strong>{}</strong> {} <strong><a href="{}">{}</a></strong>'.format(
-            self.username,
-            action,
+        return '<strong><a href="{}">{}</a></strong> {} by <strong>{}</strong>'.format(
             url_for('view_page', pagename=self.event_target),
-            self.event_target)
+            self.event_target,
+            action, self.username)
 
     def _formatted_file_event_description(self):
         new_path = '/'.join(self.event_target_2.split('/')[:-1])
