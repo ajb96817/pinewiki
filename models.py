@@ -1282,8 +1282,10 @@ class Database:
             return None
 
     def record_event(self, event_type, user_id, event_target=None, event_target_2=None, content=None, bytes_changed=None):
-        self.db.execute('''insert into event (event_type, event_target, event_target_2, bytes_changed, content, user_id, timestamp) values (?, ?, ?, ?, ?, ?, datetime('now'))''',
-                        (event_type, event_target, event_target_2, bytes_changed, content, user_id))
+        self.db.execute(
+            '''insert into event (event_type, event_target, event_target_2, bytes_changed, content, user_id, timestamp)
+            values (?, ?, ?, ?, ?, ?, datetime('now'))''',
+            (event_type, event_target, event_target_2, bytes_changed, content, user_id))
 
     def fetch_page(self, pagename):
         pages = self.fetch_pages([pagename])
@@ -1353,8 +1355,8 @@ class Database:
                     content=page.content,
                     bytes_changed=page.content_byte_size())
                 self.db.execute(
-                    '''insert into page (name, content, title, comments_json,
-                    last_modified_timestamp, last_modified_by_user_id) values (?, ?, ?, ?, datetime('now'), ?)''',
+                    '''insert into page (name, content, title, comments_json, last_modified_timestamp, last_modified_by_user_id)
+                    values (?, ?, ?, ?, datetime('now'), ?)''',
                     (page.name, page.content, page.title, page.comments_as_json_string(),
                      page.last_modified_by_user_id))
                 self.db.execute(
@@ -1366,15 +1368,12 @@ class Database:
         pass
 
     def fulltext_search(self, query, limit=20, offset=0):
-        results = []
-        for row in self.db.execute(
-                '''select name, snippet(page_fts, 1, ?, ?, ?, 20)
-                from page_fts where content match ? order by bm25(page_fts) limit ?,?''',
-                ('', '', '...', query, offset, limit)):
-            results.append({
-                'pagename': row[0],
-                'snippet': row[1]})
-        return results
+        return [
+            {'pagename': row[0], 'snippet': row[1]}
+            for row in self.db.execute(
+                    '''select name, snippet(page_fts, 1, ?, ?, ?, 20)
+                    from page_fts where content match ? order by bm25(page_fts) limit ?,?''',
+                    ('', '', '...', query, offset, limit))]
 
     def fetch_all_pagenames_set(self):
         pagenames = set()
@@ -1385,7 +1384,6 @@ class Database:
         return pagenames
 
     def create_notification(self, notification_type, message, user_id):
-        self.db.cursor()
         self.db.execute(
             '''insert into notification (type, message, user_id, timestamp)
             values (?, ?, ?, datetime('now'))''',
@@ -1434,20 +1432,17 @@ class Database:
         return notifications
 
     def fetch_sitemap(self):
-        page_infos = []
-        for row in self.db.execute(
-                '''select name, length(content), last_modified_timestamp, last_modified_by_user_id
-                from page where name not like ? and name not like ? and name not like ?''',
-                ('chat:%', 'calendar:%', 'journal:%')):
-            p = {
-                'pagename': row[0],
-                'filesize': int(row[1]),
-                'last_modified_timestamp': self.convert_timestamp_from_db(row[2]),
-                'last_modified_by_user_id': int(row[3])
-            }
-            page_infos.append(p)
+        page_infos = [
+            {'pagename': row[0],
+             'filesize': int(row[1]),
+             'last_modified_timestamp': self.convert_timestamp_from_db(row[2]),
+             'last_modified_by_user_id': int(row[3])}
+            for row in self.db.execute(
+                    '''select name, length(content), last_modified_timestamp, last_modified_by_user_id
+                    from page where name not like ? and name not like ? and name not like ?''',
+                    ('chat:%', 'calendar:%', 'journal:%'))]
         page_infos.sort(key=lambda p: p['pagename'])
-        user_ids = set([p['last_modified_by_user_id'] for p in page_infos])
+        user_ids = set(p['last_modified_by_user_id'] for p in page_infos)
         user_id_map = self._load_user_id_to_user_map(user_ids)
         for p in page_infos:
             u = user_id_map.get(p['last_modified_by_user_id'], None)
@@ -1520,7 +1515,8 @@ class Database:
         for row in self.db.execute(
                 '''select id, event_type, event_target, event_target_2, bytes_changed, user_id, timestamp
                 from event where event_target = ? and event_type in ('create_page','edit_page','delete_page','rename_page','add_comment','delete_comment')
-                order by timestamp desc limit ?,?''', (pagename, skip, limit)):
+                order by timestamp desc limit ?,?''',
+                (pagename, skip, limit)):
             event = Event()
             event.id = row[0]
             event.event_type = row[1]
@@ -1535,7 +1531,7 @@ class Database:
 
     # Populate event.username efficiently for a group of events
     def _load_usernames_for_events(self, events):
-        user_ids = set([event.user_id for event in events if event.user_id != None])
+        user_ids = set(event.user_id for event in events if event.user_id != None)
         user_map = self._load_user_id_to_user_map(user_ids)
         for event in events:
             u = user_map.get(event.user_id, None)
@@ -1543,7 +1539,7 @@ class Database:
 
     # Same as above but for a list of pages (this is only used for chat pages)
     def _load_usernames_for_pages(self, pages, include_profiles=False):
-        user_ids = set([page.last_modified_by_user_id for page in pages])
+        user_ids = set(page.last_modified_by_user_id for page in pages)
         user_map = self._load_user_id_to_user_map(user_ids)
         for page in pages:
             u = user_map.get(page.last_modified_by_user_id, None)
