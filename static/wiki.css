@@ -148,6 +148,8 @@ div.chat_post {
   width: auto;
   padding: 0;
   box-shadow: 0 0 0.5em #ddd;
+  border-radius: 0.5em;
+  overflow: hidden;
   border: 1px solid #aaa;
   margin: 1em 0;
   margin-top: 0.1em;
@@ -155,7 +157,6 @@ div.chat_post {
 div.chat_post div.chat_byline {
   padding: 0.25em 1em;
   border-bottom: 1px solid #ccc;
-  border-right: 1px solid #ccc;
 }
 div.chat_post div.chat_actions {
   float: right;
