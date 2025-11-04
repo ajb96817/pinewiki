@@ -141,6 +141,7 @@ div.chat_date_separator {
   font-size: 120%;
   padding-left: 2em;
   padding-top: 1em;
+  margin-bottom: 0.25em;
 }
 div.chat_post {
   clear: both;
@@ -316,7 +317,7 @@ table.calendar div.day_wrapper_2 {
 
 div.journal_navigation {
   float: right;
-  width: 16em;
+  width: 18em;
   padding: 0.25em 0.5em;
   margin-left: 1em;
   margin-bottom: 0.5em;
@@ -326,7 +327,20 @@ div.journal_navigation {
   box-shadow: 0 0 0.4em #ccc;
 }
 div.journal_navigation div.current_journal_user { margin-bottom: 0.25em; }
-div.journal_navigation a.selected { font-weight: bold; }
+div.journal_navigation div.journal_user_selection { margin-top: 1em; }
+div.journal_navigation a.journal_user_button {
+  padding: 0.15em 0.5em;
+  border-radius: 0.5em;
+  border: 1px solid #666;
+  background-color: #eee;
+  font-weight: bold;
+}
+div.journal_navigation a.journal_user_button.selected {
+  background-color: #ccc;
+  border: 2px solid #666;
+  color: black;
+}
+
 div.journal_new_entry_area { margin-bottom: 1em; }
 div.journal_new_entry_field_label {
   margin-top: 0.5em;

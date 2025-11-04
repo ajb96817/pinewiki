@@ -7,20 +7,19 @@
     <span class="pagename">{{pagename}}</span>
   </div>
   <div class="page_content content_box" style="overflow: auto;">
-    <div id="journal_navigation" class="journal_navigation"
+    <div id="journal_navigation"
+         class="journal_navigation"
          style="background-color: {{journal_user.chat_tint_color()}};">
       <div class="journal_user_selector">
-        <form action="{{url_for('switch_journal_user')}}" id="journal_user_selector_form" method="get">
-          <div class="current_journal_user"><strong>{{journal_user.username}}</strong>'s journal</div>
-          <div>
-            <select name="user_id">
-              {% for user in all_users %}
-              <option value="{{user.user_id}}"{{(' selected="selected"' if user.username == journal_user.username else '')|safe}} >{{user.username}}</option>
-              {% endfor %}
-            </select>
-            <button type="submit">Change user</button>
-          </div>
-        </form>
+        <div class="current_journal_user">
+          Viewing <strong>{{journal_user.username}}</strong>'s journal
+        </div>
+        <div class="journal_user_selection">
+          {% for user in all_users %}
+          <a class="journal_user_button{{' selected' if user.username == journal_user.username else ''}}"
+             href="{{url_for('view_user_journal', username=user.username)}}">{{user.username}}</a>
+          {% endfor %}
+        </div>
       </div>
       <ul>
         {% for summary_item in entry_summary %}
@@ -124,7 +123,7 @@
             Delete Entry
           </a> &ndash;
           {% endif %}
-          <a href="#" onclick="expand_or_collapse_journal_comment_area('journal_entry_{{loop.index}}_comment_area', 'journal_entry_commands_{{loop.index}}', 'comment_textarea_{{loop.index}}', true);return false;">Add Comment</a>
+          <a href="#" onclick="expand_or_collapse_journal_comment_area('journal_entry_{{loop.index}}_comment_area', 'journal_entry_commands_{{loop.index}}', 'comment_textarea_{{loop.index}}', true);return false;">Add comment</a>
         </div>
         <form class="journal_comment_area"
               id="journal_entry_{{loop.index}}_comment_area"

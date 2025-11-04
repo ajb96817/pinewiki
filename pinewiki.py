@@ -312,12 +312,6 @@ def view_user_journal(username):
         year=now_local.year,
         month=now_local.month))
 
-@app.route('/switch_journal_user')
-@login_required
-def switch_journal_user():
-    user = g.database.fetch_user_by_id(int(request.args.get('user_id')))
-    return redirect(url_for('view_user_journal', username=user.username))
-
 @app.route('/journal/<username>/<int:year>/<int:month>', methods=['GET'])
 @login_required
 def view_journal(username, year, month):
