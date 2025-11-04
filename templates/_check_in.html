@@ -1,5 +1,12 @@
 {% for info in check_in_info %}
-<li>
-  <strong>{{info['username']}}</strong> checked in {{info['time_ago_string']}}
-</li>
+      <li>
+        <div class="check_in_timestamp">
+          <strong>{{info['username']}}</strong> checked in {{info['time_ago_string']}}
+        </div>
+        {% if info['status_message'] %}
+        <div class="check_in_message">
+          {{info['status_message']}}
+        </div>
+        {% endif %}
+      </li>
 {% endfor %}

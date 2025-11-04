@@ -115,8 +115,8 @@ div.pagination {
 
 form.edit_page textarea,
 form.post_chat textarea,
-form.post_journal_entry .textfield
-                        form.journal_comment_area textarea {
+.textfield,
+form.journal_comment_area textarea {
   border: 1px solid #aaa;
   background-color: #f8f8f8;
   padding: 0.2em 0.5em;
@@ -165,11 +165,28 @@ div.chat_post div.chat_actions {
 div.chat_post div.chat_content { padding: 0 1em; }
 
 
-#check_in_button {
-  font-size: 125%;
-  font-family: monospace;
+ul.check_in_list li {
+  margin-top: 0.5em;
+}
+div.check_in_message {
+  font-style: italic;
+  color: #848;
+  margin-left: 2em;
+}
+.check_in_form {
   padding: 0.25em 0.7em;
-  margin-left: 1em;
+}
+.check_in_form button {
+  font-family: monospace;
+  font-size: 125%;
+}
+#status_message_textfield {
+  width: 20em;
+  font-size: 110%;
+  font-family: monospace;
+  background-color: #f8f8f8;
+  border: 1px solid #666;
+  padding: 0.2em 0.5em;
 }
 
 /* General "main page content" box with border and box-shadow.

@@ -241,6 +241,10 @@ class User(UserMixin):
         self.profile['check_in_timestamp'] = time.time()
         g.database.save_user_changes(self)
 
+    def update_status_message(self, status_message = None):
+        self.profile['status_message'] = status_message
+        g.database.save_user_changes(self)
+
     @classmethod
     def default_profile(cls):
         return {
@@ -1089,7 +1093,8 @@ class CheckInHelper:
         time_ago_string = self.time_ago_string(check_in_timestamp, include_seconds=False)
         return {
             'username': user.username,
-            'time_ago_string': time_ago_string
+            'time_ago_string': time_ago_string,
+            'status_message': user.profile.get('status_message')
         }
 
     def time_ago_string(self, timestamp, include_seconds=False):

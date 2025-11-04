@@ -497,7 +497,10 @@ def fetch_latest_check_ins():
 def perform_check_in():
     if not site_config.feature_enabled('check_in'):
         return redirect_home()
-    current_user.perform_check_in()
+    if request.form['action'] == 'check_in':
+        current_user.perform_check_in()
+    elif request.form['action'] == 'update_status_message':
+        current_user.update_status_message(request.form['status_message'])
     return redirect(url_for('view_check_in'))
 
 
