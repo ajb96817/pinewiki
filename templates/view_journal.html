@@ -116,11 +116,11 @@
         <div class="journal_entry_commands"
              id="journal_entry_commands_{{loop.index}}">
           {% if is_own_journal %}
-          <a href="{{url_for('edit_page', pagename=page.name)}}">Edit Entry</a> &ndash;
+          <a href="{{url_for('edit_page', pagename=page.name)}}">Edit entry</a> &ndash;
           <a
             href="{{url_for('delete_journal_entry', pagename=page.name)}}"
             onclick="return confirm('Really delete this journal entry?');">
-            Delete Entry
+            Delete entry
           </a> &ndash;
           {% endif %}
           <a href="#" onclick="expand_or_collapse_journal_comment_area('journal_entry_{{loop.index}}_comment_area', 'journal_entry_commands_{{loop.index}}', 'comment_textarea_{{loop.index}}', true);return false;">Add comment</a>

@@ -352,7 +352,7 @@ class Event:
         suffix = 'b'
         if abs(self.bytes_changed) >= 10000:
             coefficient = (self.bytes_changed+1023)//1024
-            suffix = 'kb'
+            suffix = 'k'
         if coefficient == 0:
             prefix = '&#177;0'
         elif coefficient < 0:
@@ -703,7 +703,7 @@ class FileHelper:
                 return '/'.join(['', 'static', 'filetype_icons', ext+'.png'])
         return None
 
-    # path:  dir1/dir2/dir3
+    # path: dir1/dir2/dir3
     def validate_path(self, path):
         if path == '':
             return True # special case
@@ -928,8 +928,10 @@ class ChatroomHelper:
     COLORNAMES = ['red', 'blue', 'green', 'yellow', 'pink', 'cyan']
         
     def post_new_chat(self, content, user_id):
-        # generate unique pagename
-        pagename = 'chat:{}'.format(str(time.time()).replace('.', '_'))
+        # Generate unique pagename with lexicographical time ordering
+        # (so pages created later sort after those created earlier).
+        timestamp_string = '{:.7f}'.format(time.time()).replace('.', '_')
+        pagename = ':'.join(['chat', timestamp_string])
         page = Page(pagename, content)
         page.last_modified_by_user_id = user_id
         g.database.update_page(page)
@@ -1473,11 +1475,13 @@ class Database:
         return pages
 
     # pagename: chat:12934343_432432
-    def delete_chat_page(self, pagename):
+    def delete_chat_page(self, pagename, deleting_user):
         is_valid_pagename = bool(re.match(r'^chat:\d+_\d+$', pagename)) and len(pagename) < 100
         if is_valid_pagename:
-            self.db.execute('delete from page where name = ?', (pagename,))
-            self.db.execute('delete from page_fts where name = ?', (pagename,))
+            page = self.fetch_page(pagename)
+            page.clear()
+            page.last_modified_by_user_id = deleting_user.user_id
+            self.update_page(page)
 
     def fetch_calendar_pages_in_month(self, month, year):
         pattern = 'calendar:%_{}_{:04d}'.format(

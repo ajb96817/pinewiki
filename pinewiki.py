@@ -284,7 +284,8 @@ def post_chat():
 def delete_chat_item(pagename):
     if not site_config.feature_enabled('chat'):
         return redirect_home()
-    g.database.delete_chat_page(pagename)  # NOTE: this handles validation of pagename itself
+    # NOTE: delete_chat_page handles validation of pagename itself
+    g.database.delete_chat_page(pagename, current_user)
     return redirect(url_for('view_chat'))
 
 @app.route('/journal', methods=['GET'])
