@@ -242,7 +242,7 @@ class User(UserMixin):
         g.database.save_user_changes(self)
 
     def update_status_message(self, status_message = None):
-        self.profile['status_message'] = status_message
+        self.profile['status_message'] = status_message.strip() if status_message else None
         g.database.save_user_changes(self)
 
     @classmethod
@@ -352,7 +352,7 @@ class Event:
         suffix = 'b'
         if abs(self.bytes_changed) >= 10000:
             coefficient = (self.bytes_changed+1023)//1024
-            suffix = 'K'
+            suffix = 'kb'
         if coefficient == 0:
             prefix = '&#177;0'
         elif coefficient < 0:
@@ -615,6 +615,7 @@ class Page:
             self, comment_id, author_user.username,
             timestamp_string, content)
         self.comments.append(comment)
+        self.last_modified_by_user_id = author_user.user_id
         g.database.update_page(self, 'add_comment')
         g.database.create_page_add_comment_notification(self, author_user)
         return comment
@@ -622,6 +623,7 @@ class Page:
     def delete_comment(self, comment, deleting_user):
         if comment in self.comments:
             self.comments.remove(comment)
+            self.last_modified_by_user_id = deleting_user.user_id
             g.database.update_page(self, 'delete_comment')
             g.database.create_page_delete_comment_notification(self, deleting_user)
             return True
@@ -1550,6 +1552,4 @@ class Database:
             u = user_map.get(page.last_modified_by_user_id, None)
             page.user = u
             page.username = u.username if u else '[deleted]'
-    
-
     

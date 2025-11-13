@@ -69,7 +69,7 @@
 	    <input type="checkbox" name="email_throttle_enabled" value="1"{{' checked' if profile.get('email_throttle_enabled', False) else ''}} />
 	    Send a maximum of one email every
 	    <input type="text" name="email_throttle_minutes" size="2" value="{{profile.get('email_throttle_minutes', 0)}}" />
-	    minutes
+	    minute(s)
 	    <p>
 	      {% if email_throttle_minutes_left > 0 %}
 	      <a href="{{url_for('disarm_email_throttle')}}">Disarm throttling [{{email_throttle_minutes_left}} minute(s) left]</a><br />

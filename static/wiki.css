@@ -340,6 +340,9 @@ div.journal_navigation a.journal_user_button.selected {
   border: 2px solid #666;
   color: black;
 }
+div.journal_navigation ul.journal_month_list .selected {
+  font-weight: bold;
+}
 
 div.journal_new_entry_area { margin-bottom: 1em; }
 div.journal_new_entry_field_label {

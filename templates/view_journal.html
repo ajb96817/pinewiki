@@ -21,7 +21,7 @@
           {% endfor %}
         </div>
       </div>
-      <ul>
+      <ul class="journal_month_list">
         {% for summary_item in entry_summary %}
         {% set is_selected = summary_item['year'] == selected_year and summary_item['month_index'] == selected_month %}
         <li><a href="{{url_for('view_journal', username=journal_user.username, year=summary_item['year'], month=summary_item['month_index'])}}"
